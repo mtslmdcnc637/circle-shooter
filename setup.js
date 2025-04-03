@@ -75,22 +75,36 @@ const STORAGE_KEY_BULLET_SPEED_LEVEL = STORAGE_KEY_PREFIX + 'bulletSpeedLevel';
 const STORAGE_KEY_SHIELD_DURATION_LEVEL = STORAGE_KEY_PREFIX + 'shieldDurationLevel';
 const STORAGE_KEY_SHIELD_COOLDOWN_LEVEL = STORAGE_KEY_PREFIX + 'shieldCooldownLevel';
 
-// --- Estado do Jogo ---
-let cash = 0; let health = 100; let gameState = 'start'; // 'start', 'playing', 'paused', 'gameOver', 'shoppingOverlay', 'waveIntermission'
-let enemies = []; let bullets = []; let particles = []; let powerups = []; let nanoBots = []; let convertedBullets = [];
+// --- Estado do Jogo (Global variables declared with let ONCE here) ---
+let cash = 0;
+let health = 100;
+let gameState = 'start'; // 'start', 'playing', 'paused', 'gameOver', 'shoppingOverlay', 'waveIntermission'
+let enemies = [];
+let bullets = [];
+let particles = [];
+let powerups = [];
+let nanoBots = [];
+let convertedBullets = [];
 let bossActive = false;
-let aimX = 0, aimY = 0;
-let currentWave = 0; let enemiesRemainingInWave = 0; let enemiesToSpawnThisWave = 0; let enemiesSpawnedThisWave = 0;
+let aimX = 0;
+let aimY = 0;
+let currentWave = 0;
+let enemiesRemainingInWave = 0;
+let enemiesToSpawnThisWave = 0;
+let enemiesSpawnedThisWave = 0;
 let waveTimer = 0;
-let lastEnemySpawnTime = 0;
+let lastEnemySpawnTime = 0; // *** Declared ONCE here ***
 let currentEnemySpawnInterval = BASE_ENEMY_SPAWN_INTERVAL;
-let shakeIntensity = 0; let shakeDuration = 0;
-let lastFrameTime = 0; let deltaTime = 0;
+let shakeIntensity = 0;
+let shakeDuration = 0;
+let lastFrameTime = 0;
+let deltaTime = 0;
 let animationFrameId = null;
-let shakeOffsetX = 0; let shakeOffsetY = 0;
+let shakeOffsetX = 0;
+let shakeOffsetY = 0;
 
 // --- Estado do Jogador ---
-const player = {
+const player = { // Player object is const, its properties can change
     x: 0, y: 0, radius: PLAYER_RADIUS, color: PLAYER_COLOR,
     shieldUnlocked: false, weaponLevel: 0, damageMultiplier: 1, damageLevel: 0, // Store damage level
     fireRateLevel: 0, bulletSpeedLevel: 0, shieldDurationLevel: 0, shieldCooldownLevel: 0,
@@ -100,8 +114,7 @@ const player = {
 };
 
 // --- Upgrade Definitions ---
-// Added a console log to ensure this array is defined correctly
-const upgrades = [
+const upgrades = [ // upgrades array is const, its content is defined once
     { id: 'shield', name: 'Unlock Shield', description: 'Deploy temporary shield (Space/S).', cost: SHIELD_UNLOCK_COST, levelKey: null, isPurchased: () => player.shieldUnlocked, action: () => { if (!player.shieldUnlocked) { player.shieldUnlocked = true; updateUpgradeUI(); updateShopOverlayUI(); saveGameData(); } } },
     { id: 'weaponLevel', name: 'Weapon Level', description: 'Increases bullets per shot.', cost: WEAPON_LEVEL_COST, levelKey: 'weaponLevel', maxLevel: MAX_WEAPON_LEVEL, action: (level) => { player.weaponLevel = level; } },
     { id: 'damage', name: 'Damage Up', description: `Increase bullet damage by ${DAMAGE_INCREASE_AMOUNT * 100}%.`, cost: DAMAGE_UP_COST, levelKey: 'damageLevel', maxLevel: 10, action: (level) => { player.damageLevel = level; player.damageMultiplier = 1 + (level * DAMAGE_INCREASE_AMOUNT); } },
@@ -111,7 +124,7 @@ const upgrades = [
     { id: 'shieldCooldown', name: 'Shield Cooldown', description: `Decrease shield cooldown by ${SHIELD_COOLDOWN_DECREASE / 1000}s.`, cost: SHIELD_COOLDOWN_COST, levelKey: 'shieldCooldownLevel', maxLevel: 8, requiresShield: true, action: (level) => { player.shieldCooldownLevel = level; } },
     { id: 'nanobot', name: 'Deploy Nanobot', description: `Launch a bot to convert an enemy (${NANO_BOT_DEPLOY_COST} Cash). Hotkey: B`, cost: NANO_BOT_DEPLOY_COST, levelKey: null, isPurchasable: true, action: () => buyNanoBotUpgrade() }
 ];
-console.log("Upgrades array defined:", upgrades); // DEBUG LOG
+// console.log("Upgrades array defined:", upgrades); // Keep for debugging if needed
 
 // --- Funções Utilitárias ---
 function degToRad(degrees) { return degrees * Math.PI / 180; }
@@ -159,27 +172,15 @@ function saveGameData() {
 
 // --- Configuração Inicial Canvas --- (Resize logic reverted)
 function resizeCanvas() {
-    const maxWidth = 1400; // Keep a max width
-    const maxHeight = 900; // Keep a max height
-
-    // Use available window size minus some padding
+    const maxWidth = 1400; const maxHeight = 900;
     const width = Math.min(window.innerWidth - 10, maxWidth);
     const height = Math.min(window.innerHeight - 10, maxHeight);
 
-    if (canvas) { // Check if canvas exists
-        canvas.width = width;
-        canvas.height = height;
-        console.log(`Canvas resized to: ${width}x${height}`); // Debug log
-    } else {
-        console.error("Canvas element not found during resize!");
-    }
+    if (canvas) { canvas.width = width; canvas.height = height; }
+    else { console.error("Canvas element not found during resize!"); }
 
-    // Recenter player only if necessary (start, game over, or first load)
     if (gameState === 'start' || gameState === 'gameOver' || !player.x || !player.y) {
-        player.x = canvas?.width / 2 || 300; // Use canvas size or fallback
-        player.y = canvas?.height / 2 || 200;
+        player.x = canvas?.width / 2 || 300; player.y = canvas?.height / 2 || 200;
     }
-    // Reset aim to center after resize
-    aimX = canvas?.width / 2 || 300;
-    aimY = canvas?.height / 2 || 200;
+    aimX = canvas?.width / 2 || 300; aimY = canvas?.height / 2 || 200;
 }

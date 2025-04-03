@@ -93,7 +93,7 @@ let enemiesRemainingInWave = 0;
 let enemiesToSpawnThisWave = 0;
 let enemiesSpawnedThisWave = 0;
 let waveTimer = 0;
-let lastEnemySpawnTime = 0; // *** Declared ONCE here ***
+let lastEnemySpawnTime = 0;
 let currentEnemySpawnInterval = BASE_ENEMY_SPAWN_INTERVAL;
 let shakeIntensity = 0;
 let shakeDuration = 0;
@@ -170,7 +170,7 @@ function saveGameData() {
     } catch (e) { console.error("Error saving game data:", e); }
 }
 
-// --- Configuração Inicial Canvas --- (Resize logic reverted)
+// --- Configuração Inicial Canvas & Input ---
 function resizeCanvas() {
     const maxWidth = 1400; const maxHeight = 900;
     const width = Math.min(window.innerWidth - 10, maxWidth);
@@ -183,4 +183,23 @@ function resizeCanvas() {
         player.x = canvas?.width / 2 || 300; player.y = canvas?.height / 2 || 200;
     }
     aimX = canvas?.width / 2 || 300; aimY = canvas?.height / 2 || 200;
+}
+
+// **** ADDED updateAimPosition FUNCTION DEFINITION HERE ****
+function updateAimPosition(event) {
+    if (!canvas) return; // Need canvas to calculate bounds
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+    if (event.touches && event.touches.length > 0) {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+    } else if (event.clientX !== undefined) { // Check if mouse event has coordinates
+        clientX = event.clientX;
+        clientY = event.clientY;
+    } else {
+        return; // Exit if no coordinate data found
+    }
+    // Calculate position relative to the canvas, clamp to bounds
+    aimX = Math.max(0, Math.min(canvas.width, clientX - rect.left));
+    aimY = Math.max(0, Math.min(canvas.height, clientY - rect.top));
 }

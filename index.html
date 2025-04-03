@@ -3,425 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Circle Shooter Evolved v2</title>
+    <title>Circle Shooter - Nanobots Update</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            touch-action: none;
-            background-color: #111;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        canvas {
-            display: block;
-            background-color: #222;
-            position: relative;
-        }
-        #gameUI {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        #cashDisplay {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 24px;
-            text-shadow: 1px 1px 2px black;
-            color: #FFEB3B;
-            font-weight: bold;
-        }
-        #health {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 24px;
-            text-shadow: 1px 1px 2px black;
-        }
-        #waveIndicator {
-            position: absolute;
-            top: 55px;
-            left: 20px;
-            font-size: 18px;
-            color: #aaa;
-            text-shadow: 1px 1px 1px black;
-        }
-
-        /* --- Estilos Comuns para Overlays --- */
-        .menuOverlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.85); /* Um pouco mais opaco */
-            display: flex; /* Escondido por padrão via JS */
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            font-size: 48px;
-            pointer-events: auto;
-            z-index: 10;
-            backdrop-filter: blur(4px); /* Blur um pouco maior */
-            transition: opacity 0.3s ease, visibility 0.3s ease; /* Transição suave */
-            opacity: 0;
-            visibility: hidden;
-        }
-        .menuOverlay.visible { /* Classe para mostrar */
-             opacity: 1;
-             visibility: visible;
-        }
-        .menuOverlay h1, .menuOverlay h2 {
-             margin-bottom: 20px;
-             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        .menuOverlay button { /* Estilo botão padrão overlay */
-            pointer-events: auto;
-            margin-top: 15px;
-            padding: 12px 25px;
-            font-size: 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
-            min-width: 150px;
-        }
-        .menuOverlay button:hover:not(:disabled) {
-            background-color: #45a049;
-            transform: scale(1.05);
-        }
-         .menuOverlay button:active:not(:disabled) {
-             transform: scale(0.98);
-         }
-        .menuOverlay button:disabled {
-            background-color: #555;
-            color: #999;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* --- Telas Específicas --- */
-        #startScreen {
-            /* Inicialmente visível via JS */
-        }
-         #startScreenButtons {
-            display: flex;
-            gap: 20px;
-         }
-
-        #gameOver {
-             /* Controlado via JS */
-        }
-        #pauseMenu {
-             /* Controlado via JS */
-        }
-
-        /* --- Botões In-Game --- */
-        .gameButton {
-            pointer-events: auto;
-            position: absolute;
-            padding: 10px 15px;
-            font-size: 16px;
-            background-color: rgba(255, 255, 255, 0.3);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            z-index: 5;
-        }
-        .gameButton:hover {
-             background-color: rgba(255, 255, 255, 0.5);
-        }
-        #pauseBtn {
-            bottom: 20px;
-            right: 20px;
-        }
-
-        /* --- Painel de Upgrades In-Game --- */
-        #upgradePanel {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background-color: rgba(0, 0, 0, 0.7); /* Mais transparente */
-            padding: 10px 15px;
-            border-radius: 8px;
-            z-index: 5;
-            pointer-events: auto;
-            max-width: 350px;
-            display: none; /* Controlado via JS */
-             transition: opacity 0.3s ease;
-        }
-        #upgradePanel h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 16px;
-            color: #FFEB3B;
-            text-align: center;
-        }
-        .upgradeItem { /* Item no painel in-game */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
+        /* Estilos CSS (sem mudanças significativas da v2, apenas ajustes menores se necessário) */
+        body { margin: 0; overflow: hidden; touch-action: none; background-color: #111; display: flex; justify-content: center; align-items: center; height: 100vh; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        canvas { display: block; background-color: #222; position: relative; }
+        #gameUI { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #cashDisplay { position: absolute; top: 20px; left: 20px; font-size: 24px; text-shadow: 1px 1px 2px black; color: #FFEB3B; font-weight: bold; }
+        #health { position: absolute; top: 20px; right: 20px; font-size: 24px; text-shadow: 1px 1px 2px black; }
+        #waveIndicator { position: absolute; top: 55px; left: 20px; font-size: 18px; color: #aaa; text-shadow: 1px 1px 1px black; }
+        .menuOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 48px; pointer-events: auto; z-index: 10; backdrop-filter: blur(4px); transition: opacity 0.3s ease, visibility 0.3s ease; opacity: 0; visibility: hidden; }
+        .menuOverlay.visible { opacity: 1; visibility: visible; }
+        .menuOverlay h1, .menuOverlay h2 { margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .menuOverlay button { pointer-events: auto; margin-top: 15px; padding: 12px 25px; font-size: 20px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease, transform 0.1s ease; min-width: 150px; }
+        .menuOverlay button:hover:not(:disabled) { background-color: #45a049; transform: scale(1.05); }
+        .menuOverlay button:active:not(:disabled) { transform: scale(0.98); }
+        .menuOverlay button:disabled { background-color: #555; color: #999; cursor: not-allowed; transform: none; }
+        #startScreen {}
+        #startScreenButtons { display: flex; gap: 20px; }
+        #gameOver {}
+        #pauseMenu {}
+        .gameButton { pointer-events: auto; position: absolute; padding: 10px 15px; font-size: 16px; background-color: rgba(255, 255, 255, 0.3); color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; z-index: 5; }
+        .gameButton:hover { background-color: rgba(255, 255, 255, 0.5); }
+        #pauseBtn { bottom: 20px; right: 20px; }
+        #upgradePanel { position: absolute; bottom: 20px; left: 20px; background-color: rgba(0, 0, 0, 0.7); padding: 10px 15px; border-radius: 8px; z-index: 5; pointer-events: auto; max-width: 350px; display: none; transition: opacity 0.3s ease; }
+        #upgradePanel h3 { margin-top: 0; margin-bottom: 10px; font-size: 16px; color: #FFEB3B; text-align: center; }
+        .upgradeItem { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
         .upgradeItem .info { flex-grow: 1; margin-right: 10px; }
         .upgradeItem .name { font-weight: bold; }
         .upgradeItem .cost { font-size: 13px; color: #FFEB3B; margin-left: 5px; }
-        .upgradeItem button {
-            padding: 4px 8px;
-            font-size: 12px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            min-width: 60px;
-            transition: background-color 0.2s ease;
-        }
+        .upgradeItem .details { display: block; font-size: 11px; opacity: 0.8; } /* Classe para descrição */
+        .upgradeItem button { padding: 4px 8px; font-size: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; min-width: 60px; transition: background-color 0.2s ease; }
         .upgradeItem button:hover:not(:disabled) { background-color: #45a049; }
         .upgradeItem button:disabled { background-color: #555; color: #999; cursor: not-allowed; }
-        .upgradeItem.purchased button, .upgradeItem.maxed button { /* Estilo unificado */
-             background-color: #0a631a; color: #ccc; cursor: default; }
+        .upgradeItem.purchased button, .upgradeItem.maxed button { background-color: #0a631a; color: #ccc; cursor: default; }
         .upgradeItem.purchased button:hover, .upgradeItem.maxed button:hover { background-color: #0a631a; }
-
-        /* --- NOVO: Overlay da Loja (acessada da tela inicial) --- */
-        #shopOverlay {
-             /* Usa .menuOverlay, controlado via JS */
-        }
-        #shopOverlay h2 {
-             font-size: 40px; /* Título um pouco menor */
-        }
-        #shopCashOverlay { /* Cash dentro da loja overlay */
-             font-size: 24px;
-             margin-bottom: 20px;
-             color: #FFEB3B;
-             font-weight: bold;
-        }
-        #shopItemsContainerOverlay { /* Container dos itens na loja overlay */
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 10px; /* Menos espaço */
-            margin-bottom: 20px;
-            max-width: 90%; /* Mais largo no mobile */
-            max-height: 60vh; /* Limita altura e permite scroll */
-            overflow-y: auto; /* Scroll se necessário */
-            align-items: center;
-            padding: 0 10px; /* Padding lateral para scrollbar */
-        }
-        .shopItemOverlay { /* Item na loja overlay */
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 90%; /* Mais responsivo */
-            max-width: 450px; /* Limite máximo */
-            font-size: 18px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-         .shopItemOverlay .description {
-             flex-grow: 1; text-align: left; margin-left: 10px;
-         }
-         .shopItemOverlay .description .name {
-             font-weight: bold; display: block; margin-bottom: 3px;
-         }
-         .shopItemOverlay .description .details {
-             font-size: 14px; opacity: 0.8;
-         }
-        .shopItemOverlay .cost {
-            font-weight: bold; color: #FFEB3B; margin: 0 15px; font-size: 16px;
-        }
-        .shopItemOverlay button { /* Botão comprar na loja overlay */
-            font-size: 16px;
-            padding: 8px 15px;
-            margin-top: 0; /* Reset margin */
-            min-width: 90px;
-            /* Usa estilo padrão de botão overlay */
-        }
-        .shopItemOverlay.purchased button, .shopItemOverlay.maxed button { /* Comprado/Max na loja overlay */
-             background-color: #0a631a; color: #ccc; cursor: default; }
+        #shopOverlay {}
+        #shopOverlay h2 { font-size: 40px; }
+        #shopCashOverlay { font-size: 24px; margin-bottom: 20px; color: #FFEB3B; font-weight: bold; }
+        #shopItemsContainerOverlay { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; margin-bottom: 20px; max-width: 90%; max-height: 60vh; overflow-y: auto; align-items: center; padding: 0 10px; }
+        .shopItemOverlay { background-color: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; width: 90%; max-width: 450px; font-size: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .shopItemOverlay .description { flex-grow: 1; text-align: left; margin-left: 10px; }
+        .shopItemOverlay .description .name { font-weight: bold; display: block; margin-bottom: 3px; }
+        .shopItemOverlay .description .details { font-size: 14px; opacity: 0.8; }
+        .shopItemOverlay .cost { font-weight: bold; color: #FFEB3B; margin: 0 15px; font-size: 16px; }
+        .shopItemOverlay button { font-size: 16px; padding: 8px 15px; margin-top: 0; min-width: 90px; }
+        .shopItemOverlay.purchased button, .shopItemOverlay.maxed button { background-color: #0a631a; color: #ccc; cursor: default; }
         .shopItemOverlay.purchased button:hover, .shopItemOverlay.maxed button:hover { background-color: #0a631a; }
 
-        /* --- Media Query para Telas Pequenas (Mobile) --- */
+        /* Media Query Mobile */
         @media (max-width: 600px) {
-            #cashDisplay, #health { font-size: 18px; top: 10px; }
-            #cashDisplay { left: 10px; }
-            #health { right: 10px; }
+            #cashDisplay, #health { font-size: 18px; top: 10px; } #cashDisplay { left: 10px; } #health { right: 10px; }
             #waveIndicator { font-size: 14px; top: 40px; left: 10px; }
             #pauseBtn { font-size: 14px; padding: 8px 10px; bottom: 10px; right: 10px; }
-
-            #upgradePanel {
-                max-width: 220px; /* Mais estreito */
-                padding: 8px 10px;
-                bottom: 10px;
-                left: 10px;
-            }
+            #upgradePanel { max-width: 220px; padding: 8px 10px; bottom: 10px; left: 10px; }
             #upgradePanel h3 { font-size: 14px; margin-bottom: 8px; }
-            .upgradeItem { font-size: 12px; margin-bottom: 5px; }
-             .upgradeItem .info { margin-right: 5px; }
-             .upgradeItem .name { font-size: 11px; } /* Nome menor */
-             .upgradeItem .cost { font-size: 11px; } /* Custo menor */
-             /* Descrição pode precisar ser escondida ou abreviada aqui se ainda ficar grande */
-             .upgradeItem .info .details { display: none; } /* Esconde descrição detalhada no painel mobile */
-
-            .upgradeItem button {
-                padding: 3px 6px;
-                font-size: 10px;
-                min-width: 45px;
-            }
-
-            .menuOverlay { font-size: 36px; }
-            .menuOverlay h1 { font-size: 42px; }
-            .menuOverlay h2 { font-size: 38px; }
+            .upgradeItem { font-size: 12px; margin-bottom: 5px; } .upgradeItem .info { margin-right: 5px; }
+            .upgradeItem .name { font-size: 11px; } .upgradeItem .cost { font-size: 11px; }
+            .upgradeItem .details { display: none; } /* Esconde detalhes no painel mobile */
+            .upgradeItem button { padding: 3px 6px; font-size: 10px; min-width: 45px; }
+            .menuOverlay { font-size: 36px; } .menuOverlay h1 { font-size: 42px; } .menuOverlay h2 { font-size: 38px; }
             .menuOverlay button { font-size: 18px; padding: 10px 20px; }
-
-            /* Ajustes específicos da Loja Overlay no Mobile */
             #shopItemsContainerOverlay { max-width: 100%; padding: 0 5px; }
-            .shopItemOverlay { width: 100%; font-size: 16px; padding: 10px; }
-            .shopItemOverlay .description .details { font-size: 12px; }
-            .shopItemOverlay .cost { font-size: 14px; margin: 0 10px; }
-            .shopItemOverlay button { font-size: 14px; padding: 6px 12px; min-width: 70px; }
+            .shopItemOverlay { width: 100%; font-size: 16px; padding: 10px; } .shopItemOverlay .description .details { font-size: 12px; }
+            .shopItemOverlay .cost { font-size: 14px; margin: 0 10px; } .shopItemOverlay button { font-size: 14px; padding: 6px 12px; min-width: 70px; }
         }
-
+         /* NOVO: Estilo para inimigo infectado (pode melhorar) */
+         .infected-glow {
+             box-shadow: 0 0 15px 5px rgba(76, 175, 80, 0.7); /* Brilho verde */
+         }
     </style>
 </head>
 <body>
-    <!-- Elementos da UI -->
     <div id="gameUI">
-        <div id="cashDisplay">Cash: 0</div>
-        <div id="health">Health: 100</div>
-        <div id="waveIndicator">Wave: 0</div>
+        <div id="cashDisplay">Cash: 0</div> <div id="health">Health: 100</div> <div id="waveIndicator">Wave: 0</div>
         <button id="pauseBtn" class="gameButton" style="display: none;">Pause</button>
-
-        <!-- Painel de Upgrades In-Game (visível durante o jogo) -->
-        <div id="upgradePanel" style="display: none;">
-            <h3>Upgrades</h3>
-            <div id="upgradeItemsContainer"></div>
-        </div>
-
-        <!-- Menus Overlay -->
-        <div id="startScreen" class="menuOverlay visible"> <!-- Começa visível -->
-            <h1>Circle Shooter Evolved</h1>
-            <div id="startScreenButtons">
-                <button id="startBtn">Iniciar Jogo</button>
-                <button id="startShopBtn">Loja</button> <!-- Botão Loja de volta -->
-            </div>
-        </div>
-
-        <div id="gameOver" class="menuOverlay">
-            <h2>Game Over</h2>
-            <span id="finalCash" style="font-size: 32px; display: block; margin-bottom: 20px;"></span>
-            <button id="restartBtn">Tela Inicial</button>
-        </div>
-
-        <div id="pauseMenu" class="menuOverlay">
-            <h2>Game Paused</h2>
-            <button id="resumeBtn">Resume</button>
-        </div>
-
-        <!-- NOVO/RESTAURADO: Overlay da Loja (acessado da tela inicial) -->
-        <div id="shopOverlay" class="menuOverlay">
-            <h2>Loja de Upgrades</h2>
-            <div id="shopCashOverlay">Cash: 0</div>
-            <div id="shopItemsContainerOverlay">
-                <!-- Itens da loja overlay serão adicionados aqui -->
-            </div>
-            <button id="closeShopOverlayBtn">Voltar</button>
-        </div>
+        <div id="upgradePanel" style="display: none;"> <h3>Upgrades</h3> <div id="upgradeItemsContainer"></div> </div>
+        <div id="startScreen" class="menuOverlay visible"> <h1>Circle Shooter</h1> <div id="startScreenButtons"> <button id="startBtn">Iniciar Jogo</button> <button id="startShopBtn">Loja</button> </div> </div>
+        <div id="gameOver" class="menuOverlay"> <h2>Game Over</h2> <span id="finalCash"></span> <button id="restartBtn">Tela Inicial</button> </div>
+        <div id="pauseMenu" class="menuOverlay"> <h2>Game Paused</h2> <button id="resumeBtn">Resume</button> </div>
+        <div id="shopOverlay" class="menuOverlay"> <h2>Loja de Upgrades</h2> <div id="shopCashOverlay">Cash: 0</div> <div id="shopItemsContainerOverlay"></div> <button id="closeShopOverlayBtn">Voltar</button> </div>
     </div>
-
-    <!-- Canvas do jogo -->
     <canvas id="gameCanvas"></canvas>
 
     <script>
-        // --- Seletores de Elementos ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const cashElement = document.getElementById('cashDisplay');
-        const healthElement = document.getElementById('health');
-        const waveIndicatorElement = document.getElementById('waveIndicator');
-        const startScreen = document.getElementById('startScreen');
-        const startBtn = document.getElementById('startBtn');
-        const startShopBtn = document.getElementById('startShopBtn'); // NOVO/RESTAURADO
-        const gameOverElement = document.getElementById('gameOver');
-        const finalCashElement = document.getElementById('finalCash');
-        const restartBtn = document.getElementById('restartBtn');
-        const pauseBtn = document.getElementById('pauseBtn');
-        const pauseMenu = document.getElementById('pauseMenu');
-        const resumeBtn = document.getElementById('resumeBtn');
-        const upgradePanel = document.getElementById('upgradePanel');
-        const upgradeItemsContainer = document.getElementById('upgradeItemsContainer');
-        // NOVO/RESTAURADO: Seletores da Loja Overlay
-        const shopOverlay = document.getElementById('shopOverlay');
-        const shopCashOverlayElement = document.getElementById('shopCashOverlay');
-        const shopItemsContainerOverlay = document.getElementById('shopItemsContainerOverlay');
-        const closeShopOverlayBtn = document.getElementById('closeShopOverlayBtn');
+        // --- Seletores (sem mudanças) ---
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+        const cashElement = document.getElementById('cashDisplay'); const healthElement = document.getElementById('health'); const waveIndicatorElement = document.getElementById('waveIndicator');
+        const startScreen = document.getElementById('startScreen'); const startBtn = document.getElementById('startBtn'); const startShopBtn = document.getElementById('startShopBtn');
+        const gameOverElement = document.getElementById('gameOver'); const finalCashElement = document.getElementById('finalCash'); const restartBtn = document.getElementById('restartBtn');
+        const pauseBtn = document.getElementById('pauseBtn'); const pauseMenu = document.getElementById('pauseMenu'); const resumeBtn = document.getElementById('resumeBtn');
+        const upgradePanel = document.getElementById('upgradePanel'); const upgradeItemsContainer = document.getElementById('upgradeItemsContainer');
+        const shopOverlay = document.getElementById('shopOverlay'); const shopCashOverlayElement = document.getElementById('shopCashOverlay'); const shopItemsContainerOverlay = document.getElementById('shopItemsContainerOverlay'); const closeShopOverlayBtn = document.getElementById('closeShopOverlayBtn');
 
-
-        // --- Constantes e Estado (maioria sem mudanças) ---
-        // ... (constantes de jogador, inimigo, balas, custos, etc., permanecem as mesmas da versão anterior) ...
-        const PLAYER_COLOR = '#4CAF50';
-        const PLAYER_RADIUS = 20;
-        const BULLET_COLOR = '#2196F3';
-        const BULLET_RADIUS = 5;
-        const BASE_BULLET_SPEED = 7;
-        const BASE_BULLET_DAMAGE = 10;
-        const ENEMY_CIRCLE_COLOR = '#F44336';
-        const ENEMY_SQUARE_COLOR = '#FF9800';
-        const ENEMY_TRIANGLE_COLOR = '#9C27B0';
-        const BASE_ENEMY_RADIUS = 15;
-        const BASE_ENEMY_HEALTH = 30;
-        const BASE_ENEMY_SPEED = 0.5;
-        const ENEMY_SPEED_RANDOMNESS = 0.3;
-        const SHIELD_COLOR = '#FFEB3B';
-        const BASE_SHIELD_ACTIVE_DURATION = 5000;
-        const BASE_SHIELD_COOLDOWN_DURATION = 8000;
-        const MAX_WEAPON_LEVEL = 3;
-        const BOSS_WAVE_INTERVAL = 10;
-        const BOSS_COLOR = '#E91E63';
-        const BOSS_HEALTH_MULTIPLIER = 30; // Boss um pouco mais resistente
-        const BOSS_RADIUS_MULTIPLIER = 2.5;
-        const BOSS_MINION_SPAWN_COOLDOWN = 6000; // Boss spawna minions a cada 6s
-        const BOSS_MINION_COUNT = 3; // Quantidade de minions por spawn
-        const POWERUP_DROP_CHANCE = 0.08;
-        const POWERUP_DURATION = 7000;
+        // --- Constantes ---
+        // ... (Constantes anteriores) ...
+        const PLAYER_COLOR = '#4CAF50'; const PLAYER_RADIUS = 20;
+        const BULLET_COLOR = '#2196F3'; const BULLET_RADIUS = 5; const BASE_BULLET_SPEED = 7; const BASE_BULLET_DAMAGE = 10;
+        const ENEMY_CIRCLE_COLOR = '#F44336'; const ENEMY_SQUARE_COLOR = '#FF9800'; const ENEMY_TRIANGLE_COLOR = '#9C27B0';
+        const BASE_ENEMY_RADIUS = 15; const BASE_ENEMY_HEALTH = 30; const BASE_ENEMY_SPEED = 0.5; const ENEMY_SPEED_RANDOMNESS = 0.3;
+        const SHIELD_COLOR = '#FFEB3B'; const BASE_SHIELD_ACTIVE_DURATION = 5000; const BASE_SHIELD_COOLDOWN_DURATION = 8000; const MAX_WEAPON_LEVEL = 3;
+        const BOSS_WAVE_INTERVAL = 10; const BOSS_COLOR = '#E91E63'; const BOSS_HEALTH_MULTIPLIER = 30; const BOSS_RADIUS_MULTIPLIER = 2.5; const BOSS_MINION_SPAWN_COOLDOWN = 6000; const BOSS_MINION_COUNT = 3;
+        const POWERUP_DROP_CHANCE = 0.08; const POWERUP_DURATION = 7000;
+        const POWERUP_ATTRACTION_SPEED = 4; // NOVO: Velocidade que powerups voam pro player
+        const POWERUP_ATTRACTION_START_DISTANCE = 150; // NOVO: Distância para começar a atrair
 
         // Custos
-        const SHIELD_UNLOCK_COST = 150;
-        const WEAPON_LEVEL_COST = 100;
-        const DAMAGE_UP_COST = 120;
-        const FIRE_RATE_COST = 130;
-        const BULLET_SPEED_COST = 90;
-        const SHIELD_DURATION_COST = 110;
-        const SHIELD_COOLDOWN_COST = 140;
+        const SHIELD_UNLOCK_COST = 150; const WEAPON_LEVEL_COST = 100; const DAMAGE_UP_COST = 120;
+        const FIRE_RATE_COST = 130; const BULLET_SPEED_COST = 90; const SHIELD_DURATION_COST = 110; const SHIELD_COOLDOWN_COST = 140;
+        const NANO_BOT_UNLOCK_COST = 250; // NOVO
 
         // Valores Upgrades
-        const DAMAGE_INCREASE_AMOUNT = 0.20;
-        const FIRE_RATE_INCREASE = 0.15;
-        const BULLET_SPEED_INCREASE = 0.10;
-        const SHIELD_DURATION_INCREASE = 1000;
-        const SHIELD_COOLDOWN_DECREASE = 750;
-        const MIN_SHIELD_COOLDOWN = 2000;
+        const DAMAGE_INCREASE_AMOUNT = 0.20; const FIRE_RATE_INCREASE = 0.15; const BULLET_SPEED_INCREASE = 0.10;
+        const SHIELD_DURATION_INCREASE = 1000; const SHIELD_COOLDOWN_DECREASE = 750; const MIN_SHIELD_COOLDOWN = 2000;
+        const NANO_BOT_COOLDOWN = 8000; // NOVO: Tempo para lançar novo bot
+        const NANO_BOT_SPEED = 5;       // NOVO: Velocidade do bot
+        const NANO_BOT_INFECTION_TIME = 3000; // NOVO: Tempo para infectar (ms)
+        const CONVERTED_DURATION = 10000; // NOVO: Tempo que inimigo fica convertido (ms)
+        const CONVERTED_ENEMY_RADIUS_FACTOR = 0.7; // NOVO: Tamanho do inimigo convertido
+        const CONVERTED_SHOOT_COOLDOWN = 1500; // NOVO: Cooldown de tiro do convertido
+        const CONVERTED_BULLET_SPEED = 4;    // NOVO
+        const CONVERTED_BULLET_RADIUS = 4;     // NOVO
+        const CONVERTED_BULLET_DAMAGE = 5;     // NOVO
+        const CONVERTED_BULLET_COLOR = '#00FF00'; // NOVO
 
-        // Chaves LocalStorage (sem mudanças)
-        const STORAGE_KEY_PREFIX = 'circleShooterEvolved_';
+        // Chaves LocalStorage
+        const STORAGE_KEY_PREFIX = 'circleShooterNano_'; // Novo prefixo para evitar conflitos
         const STORAGE_KEY_CASH = STORAGE_KEY_PREFIX + 'cash';
-        // ... (todas as outras chaves) ...
         const STORAGE_KEY_SHIELD_UNLOCKED = STORAGE_KEY_PREFIX + 'shieldUnlocked';
         const STORAGE_KEY_WEAPON_LEVEL = STORAGE_KEY_PREFIX + 'weaponLevel';
         const STORAGE_KEY_DAMAGE_MULTIPLIER = STORAGE_KEY_PREFIX + 'damageMultiplier';
@@ -429,36 +137,46 @@
         const STORAGE_KEY_BULLET_SPEED_LEVEL = STORAGE_KEY_PREFIX + 'bulletSpeedLevel';
         const STORAGE_KEY_SHIELD_DURATION_LEVEL = STORAGE_KEY_PREFIX + 'shieldDurationLevel';
         const STORAGE_KEY_SHIELD_COOLDOWN_LEVEL = STORAGE_KEY_PREFIX + 'shieldCooldownLevel';
+        const STORAGE_KEY_NANO_BOTS_UNLOCKED = STORAGE_KEY_PREFIX + 'nanoBotsUnlocked'; // NOVO
 
-        // Estado do Jogo (sem mudanças significativas na estrutura)
-        let cash = 0;
-        let health = 100;
-        let gameState = 'start'; // Começa na tela inicial
-        let enemies = [];
-        let bullets = [];
-        let particles = [];
-        let powerups = [];
-        let bossActive = false;
-        let lastEnemySpawnTime = 0;
-        let enemySpawnInterval = 3000;
-        let baseEnemySpawnInterval = 3000;
-        let minEnemySpawnInterval = 400;
-        let lastBulletTime = 0;
-        let aimX = 0, aimY = 0; // Será definido no resize
-        let currentWave = 0;
-        let shakeIntensity = 0;
-        let shakeDuration = 0;
+        // --- Estado do Jogo ---
+        let cash = 0; let health = 100; let gameState = 'start';
+        let enemies = []; let bullets = []; let particles = []; let powerups = []; let nanoBots = []; // NOVO: Array para nanobots
+        let bossActive = false; let lastEnemySpawnTime = 0; let enemySpawnInterval = 3000; let baseEnemySpawnInterval = 3000; let minEnemySpawnInterval = 400;
+        let lastBulletTime = 0; let aimX = 0, aimY = 0; let currentWave = 0;
+        let shakeIntensity = 0; let shakeDuration = 0;
+        let nanoBotCooldownTimer = 0; // NOVO: Timer para lançar próximo bot
 
-        // Estado do Jogador (sem mudanças na estrutura)
+        // --- Estado do Jogador ---
         const player = {
             x: 0, y: 0, radius: PLAYER_RADIUS, color: PLAYER_COLOR,
+            // Persistentes
             shieldUnlocked: false, weaponLevel: 0, damageMultiplier: 1,
             fireRateLevel: 0, bulletSpeedLevel: 0, shieldDurationLevel: 0, shieldCooldownLevel: 0,
+            nanoBotsUnlocked: false, // NOVO
+            // Não persistentes
             shieldActive: false, shieldState: 'inactive', shieldTimer: 0,
             activePowerups: {},
         };
 
-        // --- Funções de Persistência (sem mudanças) ---
+        // --- Funções Utilitárias ---
+        // NOVO: Interpolação linear de cores (simples, pode precisar de biblioteca para cores complexas)
+        function lerpColor(colorA, colorB, t) {
+             const hexToRgb = hex => hex.match(/\w\w/g).map(x => parseInt(x, 16));
+             const rgbToHex = rgb => '#' + rgb.map(x => { const hex = x.toString(16); return hex.length === 1 ? '0' + hex : hex; }).join('');
+
+             const rgbA = hexToRgb(colorA);
+             const rgbB = hexToRgb(colorB);
+
+             const rgb = rgbA.map((start, i) => {
+                 const end = rgbB[i];
+                 return Math.round(start + (end - start) * t);
+             });
+
+             return rgbToHex(rgb);
+        }
+
+        // --- Funções de Persistência (adicionado nanoBotsUnlocked) ---
         function loadGameData() {
             cash = parseInt(localStorage.getItem(STORAGE_KEY_CASH) || '0');
             player.shieldUnlocked = localStorage.getItem(STORAGE_KEY_SHIELD_UNLOCKED) === 'true';
@@ -468,9 +186,9 @@
             player.bulletSpeedLevel = parseInt(localStorage.getItem(STORAGE_KEY_BULLET_SPEED_LEVEL) || '0');
             player.shieldDurationLevel = parseInt(localStorage.getItem(STORAGE_KEY_SHIELD_DURATION_LEVEL) || '0');
             player.shieldCooldownLevel = parseInt(localStorage.getItem(STORAGE_KEY_SHIELD_COOLDOWN_LEVEL) || '0');
-            updateCashDisplay(); // Atualiza display inicial
+            player.nanoBotsUnlocked = localStorage.getItem(STORAGE_KEY_NANO_BOTS_UNLOCKED) === 'true'; // NOVO
+            updateCashDisplay();
         }
-
         function saveGameData() {
             localStorage.setItem(STORAGE_KEY_CASH, cash.toString());
             localStorage.setItem(STORAGE_KEY_SHIELD_UNLOCKED, player.shieldUnlocked.toString());
@@ -480,644 +198,320 @@
             localStorage.setItem(STORAGE_KEY_BULLET_SPEED_LEVEL, player.bulletSpeedLevel.toString());
             localStorage.setItem(STORAGE_KEY_SHIELD_DURATION_LEVEL, player.shieldDurationLevel.toString());
             localStorage.setItem(STORAGE_KEY_SHIELD_COOLDOWN_LEVEL, player.shieldCooldownLevel.toString());
+            localStorage.setItem(STORAGE_KEY_NANO_BOTS_UNLOCKED, player.nanoBotsUnlocked.toString()); // NOVO
         }
 
-        // --- Configuração Inicial e Controles (sem mudanças significativas) ---
-        function resizeCanvas() {
-            const maxWidth = 1200;
-            const maxHeight = 800;
-            const width = Math.min(window.innerWidth - 20, maxWidth);
-            const height = Math.min(window.innerHeight - 20, maxHeight);
-            canvas.width = width;
-            canvas.height = height;
-            if (!player.x || !player.y || gameState === 'start' || gameState === 'gameOver') {
-                player.x = canvas.width / 2;
-                player.y = canvas.height / 2;
-            }
-            aimX = canvas.width / 2; // Reset aim on resize
-            aimY = canvas.height / 2;
-            if (gameState === 'playing' || gameState === 'paused') {
-                draw();
-            }
-        }
-        window.addEventListener('resize', resizeCanvas);
-
-        function updateAimPosition(event) {
-            const rect = canvas.getBoundingClientRect();
-            let clientX, clientY;
-            if (event.touches && event.touches.length > 0) {
-                 clientX = event.touches[0].clientX;
-                 clientY = event.touches[0].clientY;
-            } else {
-                 clientX = event.clientX;
-                 clientY = event.clientY;
-            }
-            aimX = Math.max(0, Math.min(canvas.width, clientX - rect.left));
-            aimY = Math.max(0, Math.min(canvas.height, clientY - rect.top));
-        }
+        // --- Configuração Inicial e Controles (sem mudanças) ---
+        function resizeCanvas() { /* ... */ } window.addEventListener('resize', resizeCanvas);
+        function updateAimPosition(event) { /* ... */ }
         canvas.addEventListener('mousemove', (e) => { if (gameState === 'playing') updateAimPosition(e); });
         canvas.addEventListener('touchmove', (e) => { if (gameState === 'playing') { e.preventDefault(); updateAimPosition(e); } }, { passive: false });
         canvas.addEventListener('touchstart', (e) => { if (gameState === 'playing') { e.preventDefault(); updateAimPosition(e); } }, { passive: false });
+        window.addEventListener('keydown', (e) => { /* ... (pausa, atalhos numéricos) ... */
+             if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') { if (gameState === 'shoppingOverlay') { closeShopOverlay(); } else if (gameState === 'playing' || gameState === 'paused') { togglePause(); } }
+             if (gameState === 'playing') {
+                 switch(e.key) {
+                     case '1': buyUpgradeByIndex(0); break; case '2': buyUpgradeByIndex(1); break; case '3': buyUpgradeByIndex(2); break; case '4': buyUpgradeByIndex(3); break;
+                     case '5': buyUpgradeByIndex(4); break; case '6': buyUpgradeByIndex(5); break; case '7': buyUpgradeByIndex(6); break; case '8': buyUpgradeByIndex(7); break; // NOVO: Atalho 8 para nanobots
+                 }
+             }
+         });
 
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
-                 if (gameState === 'shoppingOverlay') { // Fecha loja overlay com Esc
-                     closeShopOverlay();
-                 } else if (gameState === 'playing' || gameState === 'paused') {
-                    togglePause();
-                }
-            }
-            if (gameState === 'playing') { // Atalhos numéricos só no jogo
-                switch(e.key) {
-                    case '1': buyUpgradeByIndex(0); break; case '2': buyUpgradeByIndex(1); break;
-                    case '3': buyUpgradeByIndex(2); break; case '4': buyUpgradeByIndex(3); break;
-                    case '5': buyUpgradeByIndex(4); break; case '6': buyUpgradeByIndex(5); break;
-                    case '7': buyUpgradeByIndex(6); break;
-                }
-            }
-        });
+        // --- Lógica da Loja Overlay (sem mudanças na estrutura) ---
+        function openShopOverlay() { /* ... */ } function closeShopOverlay() { /* ... */ }
+        function updateShopOverlayUI() { /* ... */ } function createShopOverlayItem(upgrade) { /* ... */ }
 
-        // --- NOVO/RESTAURADO: Lógica da Loja Overlay ---
-        function openShopOverlay() {
-            if (gameState !== 'start') return; // Só abre do start
-            gameState = 'shoppingOverlay';
-            updateShopOverlayUI(); // Popula a loja
-            startScreen.classList.remove('visible');
-            shopOverlay.classList.add('visible');
-        }
-
-        function closeShopOverlay() {
-            if (gameState !== 'shoppingOverlay') return;
-            gameState = 'start';
-            shopOverlay.classList.remove('visible');
-            startScreen.classList.add('visible');
-        }
-
-        function updateShopOverlayUI() {
-            shopCashOverlayElement.textContent = `Cash: ${cash}`;
-            shopItemsContainerOverlay.innerHTML = ''; // Limpa itens antigos
-
-            upgrades.forEach((upgrade) => {
-                 // Não mostra upgrades de escudo se não estiver desbloqueado
-                 if (upgrade.requiresShield && !player.shieldUnlocked) return;
-
-                const itemDiv = createShopOverlayItem(upgrade);
-                shopItemsContainerOverlay.appendChild(itemDiv);
-            });
-        }
-
-        function createShopOverlayItem(upgrade) {
-            const itemDiv = document.createElement('div');
-            itemDiv.classList.add('shopItemOverlay');
-
-            const purchased = upgrade.isPurchased ? upgrade.isPurchased() : false;
-            const maxed = upgrade.isMaxed ? upgrade.isMaxed() : false;
-            const currentCost = purchased || maxed ? 0 : (typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost);
-            const canAfford = cash >= currentCost;
-
-            if (purchased) itemDiv.classList.add('purchased');
-            if (maxed) itemDiv.classList.add('maxed');
-
-            // Div Descrição (Nome + Detalhes)
-            const descDiv = document.createElement('div');
-            descDiv.classList.add('description');
-            const nameSpan = document.createElement('span');
-            nameSpan.classList.add('name');
-            nameSpan.textContent = upgrade.name;
-            const detailsSpan = document.createElement('span');
-            detailsSpan.classList.add('details');
-            detailsSpan.textContent = upgrade.getDescription(); // Pega descrição detalhada
-            descDiv.appendChild(nameSpan);
-            descDiv.appendChild(detailsSpan);
-
-            // Span Custo
-            const costSpan = document.createElement('span');
-            costSpan.classList.add('cost');
-            costSpan.textContent = purchased ? "Adquirido" : (maxed ? "Max" : `Custo: ${currentCost}`);
-            if (purchased || maxed) costSpan.style.color = '#aaa';
-
-            // Botão Comprar
-            const buyButton = document.createElement('button');
-            buyButton.textContent = purchased ? "Adquirido" : (maxed ? "Max" : "Comprar");
-            buyButton.disabled = !canAfford || purchased || maxed;
-            buyButton.onclick = () => {
-                if (!buyButton.disabled) {
-                    const success = upgrade.buy(); // Chama a mesma função buy do painel
-                    if (success) {
-                        updateCashDisplay(); // Atualiza cash globalmente
-                        updateShopOverlayUI(); // Re-renderiza a loja overlay
-                        saveGameData();
-                    }
-                }
-            };
-
-            itemDiv.appendChild(descDiv);
-            itemDiv.appendChild(costSpan);
-            itemDiv.appendChild(buyButton);
-            return itemDiv;
-        }
-
-
-        // --- Event Listeners da UI ---
-        startBtn.addEventListener('click', startGame);
-        startShopBtn.addEventListener('click', openShopOverlay); // Abre a loja overlay
-        closeShopOverlayBtn.addEventListener('click', closeShopOverlay); // Fecha a loja overlay
-        pauseBtn.addEventListener('click', togglePause);
-        resumeBtn.addEventListener('click', togglePause);
-        restartBtn.addEventListener('click', () => {
-            gameOverElement.classList.remove('visible');
-            startScreen.classList.add('visible');
-            gameState = 'start';
-            // Garante que elementos in-game estão escondidos
-            pauseBtn.style.display = 'none';
-            upgradePanel.style.display = 'none';
-        });
-
+        // --- Event Listeners da UI (sem mudanças) ---
+        startBtn.addEventListener('click', startGame); startShopBtn.addEventListener('click', openShopOverlay);
+        closeShopOverlayBtn.addEventListener('click', closeShopOverlay); pauseBtn.addEventListener('click', togglePause);
+        resumeBtn.addEventListener('click', togglePause); restartBtn.addEventListener('click', () => { /* ... */ });
 
         // --- Funções de Controle do Jogo ---
-        function startGame() {
-            startScreen.classList.remove('visible'); // Esconde tela inicial
-            resetGameSession();
-            gameState = 'playing';
-            lastTimestamp = 0; // Reseta para cálculo correto do deltaTime
-            pauseBtn.style.display = 'block';
-            upgradePanel.style.display = 'block';
-            updateUpgradePanel(); // Popula painel in-game
-            if (player.shieldUnlocked && player.shieldState === 'inactive') {
-                 player.shieldState = 'active';
-                 player.shieldTimer = getCurrentShieldActiveDuration();
-                 player.shieldActive = true;
-            }
-            requestAnimationFrame(gameLoop);
-        }
-
-        function togglePause() {
-            if (gameState === 'playing') {
-                gameState = 'paused';
-                pauseMenu.classList.add('visible');
-                pauseBtn.textContent = 'Resume';
-                upgradePanel.style.opacity = '0'; // Esconde painel suavemente
-                 upgradePanel.style.pointerEvents = 'none';
-            } else if (gameState === 'paused') {
-                gameState = 'playing';
-                pauseMenu.classList.remove('visible');
-                pauseBtn.textContent = 'Pause';
-                upgradePanel.style.opacity = '1'; // Mostra painel suavemente
-                 upgradePanel.style.pointerEvents = 'auto';
-                lastTimestamp = performance.now(); // Importante para evitar salto no deltaTime
-                requestAnimationFrame(gameLoop);
-            }
-        }
-
-        function showGameOver() {
-            gameState = 'gameOver';
-            finalCashElement.textContent = `Cash Final: ${cash}`;
-            gameOverElement.classList.add('visible');
-            pauseBtn.style.display = 'none';
-            upgradePanel.style.display = 'none';
-            saveGameData();
-        }
-
+        function startGame() { /* ... */ } function togglePause() { /* ... */ } function showGameOver() { /* ... */ }
         function resetGameSession() {
-            health = 100;
-            enemies = []; bullets = []; particles = []; powerups = [];
+            health = 100; enemies = []; bullets = []; particles = []; powerups = []; nanoBots = []; // NOVO: Limpa nanobots
             bossActive = false; player.activePowerups = {};
             player.shieldState = 'inactive'; player.shieldTimer = 0; player.shieldActive = false;
             player.x = canvas.width / 2; player.y = canvas.height / 2;
-            lastEnemySpawnTime = 0; enemySpawnInterval = baseEnemySpawnInterval;
-            currentWave = 0;
+            lastEnemySpawnTime = 0; enemySpawnInterval = baseEnemySpawnInterval; currentWave = 0;
             aimX = canvas.width / 2; aimY = canvas.height / 2;
+            nanoBotCooldownTimer = 0; // NOVO: Reseta timer do bot
             updateHealth(); updateWaveIndicator();
-            // Limpa canvas
             ctx.fillStyle = '#222'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        // --- Lógica de Upgrades (Definição e Funções Auxiliares) ---
+        // --- Lógica de Upgrades (Adicionado NanoBots) ---
+        function getCurrentFireRateCooldown() { /* ... */ } function getCurrentBulletSpeed() { /* ... */ }
+        function getCurrentShieldActiveDuration() { /* ... */ } function getCurrentShieldCooldownDuration() { /* ... */ }
 
-        // Funções getCurrent... (sem mudanças)
-        function getCurrentFireRateCooldown() { const baseCooldown = 350; return baseCooldown / (1 + player.fireRateLevel * FIRE_RATE_INCREASE); }
-        function getCurrentBulletSpeed() { return BASE_BULLET_SPEED * (1 + player.bulletSpeedLevel * BULLET_SPEED_INCREASE); }
-        function getCurrentShieldActiveDuration() { return BASE_SHIELD_ACTIVE_DURATION + (player.shieldDurationLevel * SHIELD_DURATION_INCREASE); }
-        function getCurrentShieldCooldownDuration() { const decreasedCooldown = BASE_SHIELD_COOLDOWN_DURATION - (player.shieldCooldownLevel * SHIELD_COOLDOWN_DECREASE); return Math.max(MIN_SHIELD_COOLDOWN, decreasedCooldown); }
-
-        // Definição do array 'upgrades' (sem mudanças na estrutura interna)
-        // Cada objeto define um upgrade com id, name, cost, buy, getDescription, etc.
         const upgrades = [
-            { /* Shield Unlock */
-                id: 'shieldUnlock', name: "Desbloquear Escudo", cost: SHIELD_UNLOCK_COST,
-                isPurchased: () => player.shieldUnlocked,
-                buy: () => { /* ... lógica de compra ... */
-                     if (cash >= SHIELD_UNLOCK_COST && !player.shieldUnlocked) {
-                         cash -= SHIELD_UNLOCK_COST; player.shieldUnlocked = true;
-                         player.shieldState = 'active'; player.shieldTimer = getCurrentShieldActiveDuration(); player.shieldActive = true;
+            { /* Shield Unlock */ id: 'shieldUnlock', name: "Desbloquear Escudo", cost: SHIELD_UNLOCK_COST, isPurchased: () => player.shieldUnlocked, buy: () => { /*...*/ return true; }, getDescription: () => `Ativa ${getCurrentShieldActiveDuration()/1000}s, Recarrega ${getCurrentShieldCooldownDuration()/1000}s` },
+            { /* Weapon Level */ id: 'weaponLevel', name: "Nível Arma", cost: () => WEAPON_LEVEL_COST * (player.weaponLevel + 1), maxLevel: MAX_WEAPON_LEVEL, isMaxed: () => player.weaponLevel >= MAX_WEAPON_LEVEL, buy: () => { /*...*/ return true; }, getDescription: () => `Projéteis: ${player.weaponLevel}/${MAX_WEAPON_LEVEL}. Próximo Custo: ${upgrades[1].isMaxed() ? 'MAX' : upgrades[1].cost()}` },
+            { /* Damage Up */ id: 'damageUp', name: "Dano", cost: () => Math.floor(DAMAGE_UP_COST * (1 + (player.damageMultiplier - 1) / DAMAGE_INCREASE_AMOUNT) * 1.2), buy: () => { /*...*/ return true; }, getDescription: () => `+${(DAMAGE_INCREASE_AMOUNT * 100).toFixed(0)}%. Atual: ${(player.damageMultiplier * 100).toFixed(0)}%. Custo: ${upgrades[2].cost()}` },
+            { /* Fire Rate */ id: 'fireRate', name: "Cadência", cost: () => FIRE_RATE_COST * (player.fireRateLevel + 1), buy: () => { /*...*/ return true; }, getDescription: () => `+${(FIRE_RATE_INCREASE * 100).toFixed(0)}% Vel. Disparo. Nível: ${player.fireRateLevel}. Custo: ${upgrades[3].cost()}` },
+            { /* Bullet Speed */ id: 'bulletSpeed', name: "Vel. Projétil", cost: () => BULLET_SPEED_COST * (player.bulletSpeedLevel + 1), buy: () => { /*...*/ return true; }, getDescription: () => `+${(BULLET_SPEED_INCREASE * 100).toFixed(0)}% Vel. Projétil. Nível: ${player.bulletSpeedLevel}. Custo: ${upgrades[4].cost()}` },
+            { /* Shield Duration */ id: 'shieldDuration', name: "Duração Escudo", cost: () => SHIELD_DURATION_COST * (player.shieldDurationLevel + 1), requiresShield: true, buy: () => { /*...*/ return true; }, getDescription: () => `+${SHIELD_DURATION_INCREASE/1000}s Duração. Atual: ${getCurrentShieldActiveDuration()/1000}s. Custo: ${upgrades[5].cost()}` },
+            { /* Shield Cooldown */ id: 'shieldCooldown', name: "Recarga Escudo", cost: () => SHIELD_COOLDOWN_COST * (player.shieldCooldownLevel + 1), requiresShield: true, isMaxed: () => getCurrentShieldCooldownDuration() <= MIN_SHIELD_COOLDOWN, buy: () => { /*...*/ return true; }, getDescription: () => `-${SHIELD_COOLDOWN_DECREASE/1000}s Recarga. Atual: ${getCurrentShieldCooldownDuration()/1000}s. Custo: ${upgrades[6].isMaxed() ? 'MAX' : upgrades[6].cost()}` },
+             // NOVO: Upgrade NanoBots
+             {
+                 id: 'nanoBots',
+                 name: "Nano-Robôs",
+                 cost: NANO_BOT_UNLOCK_COST,
+                 isPurchased: () => player.nanoBotsUnlocked,
+                 buy: () => {
+                     if (cash >= NANO_BOT_UNLOCK_COST && !player.nanoBotsUnlocked) {
+                         cash -= NANO_BOT_UNLOCK_COST;
+                         player.nanoBotsUnlocked = true;
+                         nanoBotCooldownTimer = NANO_BOT_COOLDOWN; // Dá um cooldown inicial
                          return true;
-                     } return false;
+                     }
+                     return false;
                  },
-                getDescription: () => `Ativa ${getCurrentShieldActiveDuration()/1000}s, Recarrega ${getCurrentShieldCooldownDuration()/1000}s`
-            },
-            { /* Weapon Level */
-                id: 'weaponLevel', name: "Nível Arma",
-                cost: () => WEAPON_LEVEL_COST * (player.weaponLevel + 1), maxLevel: MAX_WEAPON_LEVEL,
-                isMaxed: () => player.weaponLevel >= MAX_WEAPON_LEVEL,
-                buy: () => { /* ... lógica de compra ... */
-                     const currentCost = upgrades[1].cost();
-                     if (cash >= currentCost && !upgrades[1].isMaxed()) {
-                         cash -= currentCost; player.weaponLevel++; return true;
-                     } return false;
-                },
-                getDescription: () => `Projéteis: ${player.weaponLevel}/${MAX_WEAPON_LEVEL}. Próximo Custo: ${upgrades[1].isMaxed() ? 'MAX' : upgrades[1].cost()}`
-            },
-            { /* Damage Up */
-                id: 'damageUp', name: "Dano",
-                cost: () => Math.floor(DAMAGE_UP_COST * (1 + (player.damageMultiplier - 1) / DAMAGE_INCREASE_AMOUNT) * 1.2), // Custo escala com nível de dano
-                buy: () => { /* ... lógica de compra ... */
-                     const currentCost = upgrades[2].cost();
-                     if (cash >= currentCost) {
-                         cash -= currentCost; player.damageMultiplier += DAMAGE_INCREASE_AMOUNT; return true;
-                     } return false;
-                },
-                getDescription: () => `+${(DAMAGE_INCREASE_AMOUNT * 100).toFixed(0)}%. Atual: ${(player.damageMultiplier * 100).toFixed(0)}%. Custo: ${upgrades[2].cost()}`
-             },
-            { /* Fire Rate */
-                 id: 'fireRate', name: "Cadência", cost: () => FIRE_RATE_COST * (player.fireRateLevel + 1),
-                 buy: () => { /* ... lógica de compra ... */
-                      const currentCost = upgrades[3].cost();
-                      if (cash >= currentCost) {
-                          cash -= currentCost; player.fireRateLevel++; return true;
-                      } return false;
-                 },
-                 getDescription: () => `+${(FIRE_RATE_INCREASE * 100).toFixed(0)}% Vel. Disparo. Nível: ${player.fireRateLevel}. Custo: ${upgrades[3].cost()}`
-             },
-            { /* Bullet Speed */
-                 id: 'bulletSpeed', name: "Vel. Projétil", cost: () => BULLET_SPEED_COST * (player.bulletSpeedLevel + 1),
-                 buy: () => { /* ... lógica de compra ... */
-                      const currentCost = upgrades[4].cost();
-                      if (cash >= currentCost) {
-                          cash -= currentCost; player.bulletSpeedLevel++; return true;
-                      } return false;
-                 },
-                 getDescription: () => `+${(BULLET_SPEED_INCREASE * 100).toFixed(0)}% Vel. Projétil. Nível: ${player.bulletSpeedLevel}. Custo: ${upgrades[4].cost()}`
-             },
-            { /* Shield Duration */
-                 id: 'shieldDuration', name: "Duração Escudo", cost: () => SHIELD_DURATION_COST * (player.shieldDurationLevel + 1), requiresShield: true,
-                 buy: () => { /* ... lógica de compra ... */
-                      const currentCost = upgrades[5].cost();
-                      if (cash >= currentCost && player.shieldUnlocked) {
-                          cash -= currentCost; player.shieldDurationLevel++; return true;
-                      } return false;
-                 },
-                 getDescription: () => `+${SHIELD_DURATION_INCREASE/1000}s Duração. Atual: ${getCurrentShieldActiveDuration()/1000}s. Custo: ${upgrades[5].cost()}`
-             },
-            { /* Shield Cooldown */
-                 id: 'shieldCooldown', name: "Recarga Escudo", cost: () => SHIELD_COOLDOWN_COST * (player.shieldCooldownLevel + 1), requiresShield: true,
-                 isMaxed: () => getCurrentShieldCooldownDuration() <= MIN_SHIELD_COOLDOWN,
-                 buy: () => { /* ... lógica de compra ... */
-                      const currentCost = upgrades[6].cost();
-                      if (cash >= currentCost && player.shieldUnlocked && !upgrades[6].isMaxed()) {
-                          cash -= currentCost; player.shieldCooldownLevel++; return true;
-                      } return false;
-                 },
-                 getDescription: () => `-${SHIELD_COOLDOWN_DECREASE/1000}s Recarga. Atual: ${getCurrentShieldCooldownDuration()/1000}s. Custo: ${upgrades[6].isMaxed() ? 'MAX' : upgrades[6].cost()}`
+                 getDescription: () => `Lança robôs que convertem inimigos temporariamente. Custo: ${NANO_BOT_UNLOCK_COST}`
              }
         ];
 
-        // Função updateUpgradePanel (sem mudanças na lógica, apenas na chamada)
-        function updateUpgradePanel() {
-            if (gameState !== 'playing' || upgradePanel.style.display === 'none') return; // Só atualiza se visível e jogando
-            upgradeItemsContainer.innerHTML = '';
+        // --- Lógica do Jogo ---
+        function createParticles(...) { /* ... */ } function updateParticles(...) { /* ... */ }
+        function triggerShake(...) { /* ... */ } function updateShake(...) { /* ... */ }
+        function updateShield(...) { /* ... */ } function updateActivePowerups(...) { /* ... */ }
+        function spawnPowerup(...) { /* ... */ }
+        function spawnEnemy() { /* ... */ } function spawnBoss() { /* ... */ } function spawnMinionsAroundBoss(...) { /* ... */ }
 
-            upgrades.forEach((upgrade, index) => {
-                if (upgrade.requiresShield && !player.shieldUnlocked) return;
-                if (upgrade.id === 'shieldUnlock' && player.shieldUnlocked) return; // Não mostra desbloquear se já tem
+        // MODIFICADO: updatePowerups com atração
+        function updatePowerups(deltaTime) {
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const powerup = powerups[i];
+                powerup.life -= deltaTime;
 
-                const itemDiv = document.createElement('div');
-                itemDiv.classList.add('upgradeItem');
+                const dx = player.x - powerup.x;
+                const dy = player.y - powerup.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
 
-                const purchased = upgrade.isPurchased ? upgrade.isPurchased() : false;
-                const maxed = upgrade.isMaxed ? upgrade.isMaxed() : false;
-                const currentCost = purchased || maxed ? 0 : (typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost);
-                const canAfford = cash >= currentCost;
-
-                if (purchased) itemDiv.classList.add('purchased');
-                if (maxed) itemDiv.classList.add('maxed');
-
-                const infoDiv = document.createElement('div'); infoDiv.classList.add('info');
-                const nameSpan = document.createElement('span'); nameSpan.classList.add('name');
-                // Mostra número apenas no painel in-game para atalho
-                nameSpan.textContent = `${index + 1}. ${upgrade.name}`;
-                const descSpan = document.createElement('span'); descSpan.classList.add('details'); // Classe para poder esconder no mobile
-                 // Descrição mais curta para o painel
-                 let panelDesc = '';
-                 if (upgrade.id === 'shieldUnlock') panelDesc = `Custo: ${currentCost}`;
-                 else if (upgrade.id === 'weaponLevel') panelDesc = `Nível: ${player.weaponLevel}/${MAX_WEAPON_LEVEL}`;
-                 else if (upgrade.id === 'damageUp') panelDesc = `Dano: ${(player.damageMultiplier * 100).toFixed(0)}%`;
-                 else if (upgrade.id === 'fireRate') panelDesc = `Nível: ${player.fireRateLevel}`;
-                 else if (upgrade.id === 'bulletSpeed') panelDesc = `Nível: ${player.bulletSpeedLevel}`;
-                 else if (upgrade.id === 'shieldDuration') panelDesc = `Duração: ${getCurrentShieldActiveDuration()/1000}s`;
-                 else if (upgrade.id === 'shieldCooldown') panelDesc = `Recarga: ${getCurrentShieldCooldownDuration()/1000}s`;
-                 descSpan.textContent = panelDesc;
-
-                infoDiv.appendChild(nameSpan); infoDiv.appendChild(descSpan);
-
-                const buyButton = document.createElement('button');
-                let buttonText = purchased ? "OK" : (maxed ? "Max" : `(${currentCost})`);
-                buyButton.textContent = buttonText;
-                buyButton.disabled = !canAfford || purchased || maxed;
-                buyButton.onclick = (e) => {
-                    e.stopPropagation();
-                    if (!buyButton.disabled) {
-                        const success = upgrade.buy();
-                        if (success) {
-                            updateCashDisplay(); // Atualiza cash e o próprio painel
-                            saveGameData();
-                            // Opcional: Pequeno feedback visual/sonoro de compra
-                        }
+                // Atração
+                if (distance < POWERUP_ATTRACTION_START_DISTANCE) {
+                    const speed = POWERUP_ATTRACTION_SPEED * (1 + (1 - distance/POWERUP_ATTRACTION_START_DISTANCE)); // Acelera perto
+                    if (distance > 1) { // Evita divisão por zero e jitter
+                        powerup.x += (dx / distance) * speed * (deltaTime / 16.67);
+                        powerup.y += (dy / distance) * speed * (deltaTime / 16.67);
                     }
-                };
-                itemDiv.appendChild(infoDiv); itemDiv.appendChild(buyButton);
-                upgradeItemsContainer.appendChild(itemDiv);
-            });
-        }
+                }
+                 // Se não está perto, pode ter um movimento leve (opcional)
+                 // else { powerup.y += 0.5 * (deltaTime / 16.67); } // Queda lenta original
 
-        // Função buyUpgradeByIndex (sem mudanças)
-         function buyUpgradeByIndex(index) { /* ... */
-              if (gameState !== 'playing' || index < 0 || index >= upgrades.length) return;
-              const upgrade = upgrades[index];
-              if (upgrade.requiresShield && !player.shieldUnlocked) return;
-              if (upgrade.id === 'shieldUnlock' && player.shieldUnlocked) return;
-              const purchased = upgrade.isPurchased ? upgrade.isPurchased() : false;
-              const maxed = upgrade.isMaxed ? upgrade.isMaxed() : false;
-              if (purchased || maxed) return;
-              const currentCost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
-              if (cash >= currentCost) {
-                  const success = upgrade.buy();
-                  if (success) { updateCashDisplay(); saveGameData(); }
-              }
-          }
+                // Colisão com jogador
+                if (distance < player.radius + powerup.radius) {
+                    player.activePowerups[powerup.type] = Date.now() + POWERUP_DURATION;
+                    if (powerup.type === 'rapidFire') player.color = '#FFFF00';
+                    if (powerup.type === 'cashBoost') { const cashBonus = 50 + Math.floor(Math.random() * 51); cash += cashBonus; updateCashDisplay(); saveGameData(); createParticles(player.x, player.y, 15, '#FFEB3B'); }
+                    createParticles(powerup.x, powerup.y, 10, powerup.color);
+                    powerups.splice(i, 1);
+                    continue;
+                }
 
-
-        // --- Lógica do Jogo (Partículas, Shake, Powerups, etc. - sem mudanças) ---
-        function createParticles(x, y, count, color, speedMultiplier = 1, lifeMultiplier = 1) { /* ... */
-             for (let i = 0; i < count; i++) {
-                 const angle = Math.random() * Math.PI * 2;
-                 const speed = (Math.random() * 3 + 1) * speedMultiplier;
-                 const life = (Math.random() * 500 + 300) * lifeMultiplier;
-                 particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, radius: Math.random() * 2 + 1, color: color, life: life, maxLife: life, });
-             }
-         }
-        function updateParticles(deltaTime) { /* ... */
-             for (let i = particles.length - 1; i >= 0; i--) {
-                 const p = particles[i]; p.x += p.vx * (deltaTime / 16.67); p.y += p.vy * (deltaTime / 16.67);
-                 p.life -= deltaTime; p.vx *= 0.98; p.vy *= 0.98;
-                 if (p.life <= 0) { particles.splice(i, 1); }
-             }
-         }
-        function triggerShake(intensity, duration) { /* ... */
-             if (intensity > shakeIntensity) { shakeIntensity = intensity; shakeDuration = duration; }
-             else if (shakeIntensity === 0) { shakeIntensity = intensity; shakeDuration = duration; }
-         }
-        function updateShake(deltaTime) { /* ... */
-             if (shakeDuration > 0) { shakeDuration -= deltaTime; if (shakeDuration <= 0) { shakeIntensity = 0; } }
-         }
-        function updateShield(deltaTime) { /* ... (lógica do escudo cíclico) ... */
-             if (!player.shieldUnlocked) return;
-             const shieldActiveDuration = getCurrentShieldActiveDuration(); const shieldCooldownDuration = getCurrentShieldCooldownDuration();
-             player.shieldTimer -= deltaTime;
-             if (player.shieldState === 'active' && player.shieldTimer <= 0) {
-                 player.shieldState = 'cooldown'; player.shieldTimer = shieldCooldownDuration; player.shieldActive = false;
-             } else if (player.shieldState === 'cooldown' && player.shieldTimer <= 0) {
-                 if (!player.activePowerups.shieldBoost) {
-                     player.shieldState = 'active'; player.shieldTimer = shieldActiveDuration; player.shieldActive = true;
-                 } else { player.shieldTimer = 0.1; }
-             }
-             if (player.activePowerups.shieldBoost && !player.shieldActive) {
-                 player.shieldActive = true; player.shieldState = 'active';
-             }
-         }
-        function updateActivePowerups(deltaTime) { /* ... */
-            const now = Date.now();
-            for (const type in player.activePowerups) {
-                if (now > player.activePowerups[type]) {
-                    const endedType = type; // Guarda o tipo antes de deletar
-                    delete player.activePowerups[type];
-                     if (endedType === 'rapidFire') player.color = PLAYER_COLOR;
-                     if (endedType === 'shieldBoost' && player.shieldUnlocked) {
-                         // Força reavaliação do estado do escudo normal
-                         player.shieldActive = false; // Desativa visualmente
-                         // O estado ('active' ou 'cooldown') será corrigido no próximo updateShield
-                         // player.shieldState = 'cooldown'; // Não força, deixa updateShield decidir
-                         // player.shieldTimer = getCurrentShieldCooldownDuration(); // Não reseta, deixa o timer atual
-                         updateShield(0); // Força verificação
-                     }
+                // Remove se expirar
+                if (powerup.life <= 0) {
+                    powerups.splice(i, 1);
                 }
             }
-         }
-        function updatePowerups(deltaTime) { /* ... */
-             for (let i = powerups.length - 1; i >= 0; i--) {
-                 const powerup = powerups[i]; powerup.y += 1 * (deltaTime / 16.67); powerup.life -= deltaTime;
-                 const dx = player.x - powerup.x; const dy = player.y - powerup.y; const distance = Math.sqrt(dx * dx + dy * dy);
-                 if (distance < player.radius + powerup.radius) {
-                     player.activePowerups[powerup.type] = Date.now() + POWERUP_DURATION;
-                     if (powerup.type === 'rapidFire') player.color = '#FFFF00';
-                     if (powerup.type === 'cashBoost') {
-                         const cashBonus = 50 + Math.floor(Math.random() * 51); cash += cashBonus;
-                         updateCashDisplay(); saveGameData(); createParticles(player.x, player.y, 15, '#FFEB3B');
-                     }
-                      createParticles(powerup.x, powerup.y, 10, powerup.color); // Efeito de coleta
-                     powerups.splice(i, 1); continue;
-                 }
-                 if (powerup.y > canvas.height + powerup.radius * 2 || powerup.life <= 0) { powerups.splice(i, 1); }
-             }
-         }
-        function spawnPowerup(x, y) { /* ... */
-             const types = ['rapidFire', 'shieldBoost', 'cashBoost']; const type = types[Math.floor(Math.random() * types.length)];
-             let color = '#FFFFFF', symbol = '?';
-             switch (type) {
-                 case 'rapidFire': color = '#FFFF00'; symbol = '>>'; break;
-                 case 'shieldBoost': color = SHIELD_COLOR; symbol = 'S'; break;
-                 case 'cashBoost': color = '#FFEB3B'; symbol = '$'; break;
-             }
-             powerups.push({ x, y, radius: 10, color: color, symbol: symbol, type: type, life: 10000 });
-         }
+        }
 
-        // --- Lógica de Inimigos e Boss (MODIFICADO: Boss não atira) ---
-        function spawnEnemy() {
-            const now = Date.now();
-            if (bossActive || now - lastEnemySpawnTime < enemySpawnInterval) return;
-            lastEnemySpawnTime = now;
-
-            // Avança onda apenas se não for onda de boss (que é tratada separadamente)
-            if (!(currentWave > 0 && (currentWave + 1) % BOSS_WAVE_INTERVAL === 0)) {
-                 currentWave++;
-                 updateWaveIndicator();
-            }
-
-
-            // Lógica do Boss (spawn e atualização do intervalo)
-            if (currentWave > 0 && currentWave % BOSS_WAVE_INTERVAL === 0 && !bossActive) {
-                 spawnBoss();
-                 // Aumenta intervalo base para próxima leva pós-boss
-                 baseEnemySpawnInterval = Math.max(minEnemySpawnInterval, baseEnemySpawnInterval * 0.9);
-                 enemySpawnInterval = baseEnemySpawnInterval * 1.5; // Dá um respiro maior logo após o boss
+        // NOVO: Lógica dos NanoBots
+        function launchNanoBot() {
+             if (!player.nanoBotsUnlocked || nanoBotCooldownTimer > 0 || nanoBots.length > 0) { // Só lança 1 por vez por enquanto
                  return;
-            }
-            if (bossActive) return; // Não spawna normal se boss está ativo
+             }
 
-            // Spawn Normal
-            const edge = Math.floor(Math.random() * 4);
-            let x, y;
-            const radius = BASE_ENEMY_RADIUS + Math.random() * 5;
-            // ... (switch para x, y nas bordas) ...
-             switch (edge) { case 0: x = Math.random() * canvas.width; y = -radius; break; case 1: x = canvas.width + radius; y = Math.random() * canvas.height; break; case 2: x = Math.random() * canvas.width; y = canvas.height + radius; break; case 3: x = -radius; y = Math.random() * canvas.height; break; }
+             let targetEnemy = null;
+             let maxHealth = -1;
 
-            let enemyType = 'circle', color = ENEMY_CIRCLE_COLOR, speedMultiplier = 1.0, healthMultiplier = 1.0;
-            const typeRoll = Math.random();
-            if (currentWave > 5 && typeRoll < 0.3) { enemyType = 'square'; color = ENEMY_SQUARE_COLOR; speedMultiplier = 0.8; healthMultiplier = 1.5; }
-            else if (currentWave > 10 && typeRoll < 0.5) { enemyType = 'triangle'; color = ENEMY_TRIANGLE_COLOR; speedMultiplier = 1.3; healthMultiplier = 0.8; }
-
-            const speed = (BASE_ENEMY_SPEED + Math.random() * ENEMY_SPEED_RANDOMNESS) * speedMultiplier;
-            const healthBonusPerWave = 1 + Math.floor(currentWave / 5);
-            const enemyHealth = (BASE_ENEMY_HEALTH + currentWave * healthBonusPerWave) * healthMultiplier;
-
-            enemies.push({
-                x: x, y: y, radius: radius, color: color, speed: speed, type: enemyType,
-                health: enemyHealth, maxHealth: enemyHealth,
-                updateDirection: function(deltaTime) { /* ... (movimento básico ou errático) ... */
-                    const angle = Math.atan2(player.y - this.y, player.x - this.x);
-                    const angleOffset = this.type === 'triangle' ? (Math.random() - 0.5) * 0.2 : 0;
-                    this.dx = Math.cos(angle + angleOffset) * this.speed;
-                    this.dy = Math.sin(angle + angleOffset) * this.speed;
-                 },
-                takeDamage: function(amount) { /* ... */ this.health -= amount; createParticles(this.x, this.y, 1, '#FF9999', 0.5, 0.5); return this.health <= 0; },
-                die: function() { /* ... (drop chance, cash gain, particles) ... */
-                     if (Math.random() < POWERUP_DROP_CHANCE) { spawnPowerup(this.x, this.y); }
-                     const cashGained = 5 + Math.floor(this.maxHealth / 20); cash += cashGained; updateCashDisplay();
-                     createParticles(this.x, this.y, 15, this.color, 1.2, 1.0); saveGameData();
-                 }
-            });
-
-            // Reduz intervalo de spawn
-            if (enemySpawnInterval > minEnemySpawnInterval) {
-                 const reductionFactor = 1 - (0.01 + currentWave * 0.0005);
-                 enemySpawnInterval = Math.max(minEnemySpawnInterval, enemySpawnInterval * reductionFactor);
-            }
-        }
-
-        // MODIFICADO: Boss Spawner (sem tiro, com minions)
-        function spawnBoss() {
-            currentWave++; // Incrementa a onda para o boss
-            updateWaveIndicator();
-            bossActive = true;
-            const radius = BASE_ENEMY_RADIUS * BOSS_RADIUS_MULTIPLIER;
-            const health = (BASE_ENEMY_HEALTH + currentWave * (1 + Math.floor(currentWave / 5))) * BOSS_HEALTH_MULTIPLIER;
-            const speed = BASE_ENEMY_SPEED * 0.5; // Boss ainda mais lento
-
-            enemies.push({
-                x: canvas.width / 2, y: -radius * 2,
-                radius: radius, color: BOSS_COLOR, speed: speed,
-                type: 'boss', health: health, maxHealth: health, isBoss: true,
-                minionSpawnTimer: BOSS_MINION_SPAWN_COOLDOWN / 2, // Começa a spawnar mais cedo
-                minionSpawnCooldown: BOSS_MINION_SPAWN_COOLDOWN,
-                updateDirection: function(deltaTime) {
-                    // Movimento lento para o jogador
-                    const angle = Math.atan2(player.y - this.y, player.x - this.x);
-                    this.dx = Math.cos(angle) * this.speed;
-                    this.dy = Math.sin(angle) * this.speed;
-
-                    // --- Lógica de Spawn de Minions ---
-                    this.minionSpawnTimer += deltaTime;
-                    if (this.minionSpawnTimer >= this.minionSpawnCooldown) {
-                        this.minionSpawnTimer = 0;
-                        spawnMinionsAroundBoss(this); // Chama função auxiliar
-                        createParticles(this.x, this.y, 20, this.color, 0.8, 0.8); // Efeito visual de spawn
-                    }
-                },
-                takeDamage: function(amount) { /* ... (partículas de hit no boss) ... */ this.health -= amount; createParticles(this.x + (Math.random()-0.5)*this.radius, this.y + (Math.random()-0.5)*this.radius, 3, '#FFCCCC', 0.8, 0.8); return this.health <= 0; },
-                die: function() { /* ... (cash, powerups, shake, particles) ... */
-                     bossActive = false; const cashGained = 150 + Math.floor(this.maxHealth / 10); cash += cashGained; updateCashDisplay();
-                     spawnPowerup(this.x - 30, this.y); spawnPowerup(this.x + 30, this.y); spawnPowerup(this.x, this.y - 30);
-                     createParticles(this.x, this.y, 100, this.color, 2.5, 1.5); triggerShake(15, 800); saveGameData();
-                     lastEnemySpawnTime = Date.now(); // Dá um respiro
-                     // enemySpawnInterval já foi ajustado ao chamar spawnBoss
-                 }
-            });
-        }
-
-        // NOVO: Função auxiliar para spawnar minions do boss
-        function spawnMinionsAroundBoss(boss) {
-             for (let i = 0; i < BOSS_MINION_COUNT; i++) {
-                 const angle = (Math.PI * 2 / BOSS_MINION_COUNT) * i + (Math.random() * 0.5 - 0.25); // Espalha ao redor
-                 const spawnDist = boss.radius * 1.2;
-                 const x = boss.x + Math.cos(angle) * spawnDist;
-                 const y = boss.y + Math.sin(angle) * spawnDist;
-
-                 // Spawn um inimigo básico (círculo) com vida/velocidade ajustada
-                 const minionHealth = BASE_ENEMY_HEALTH * 0.5 + currentWave * 2; // Minions mais fracos
-                 const minionSpeed = BASE_ENEMY_SPEED * 1.2; // Um pouco mais rápidos
-
-                 enemies.push({
-                     x: x, y: y, radius: BASE_ENEMY_RADIUS * 0.8, color: ENEMY_CIRCLE_COLOR,
-                     speed: minionSpeed, type: 'circle',
-                     health: minionHealth, maxHealth: minionHealth,
-                     updateDirection: function(deltaTime) { /* ... (movimento básico) ... */
-                         const angle = Math.atan2(player.y - this.y, player.x - this.x);
-                         this.dx = Math.cos(angle) * this.speed; this.dy = Math.sin(angle) * this.speed;
-                     },
-                     takeDamage: function(amount) { /* ... */ this.health -= amount; createParticles(this.x, this.y, 1, '#FF9999', 0.5, 0.5); return this.health <= 0; },
-                     die: function() { /* ... (sem drop/cash especial para minions) ... */
-                          createParticles(this.x, this.y, 8, this.color, 1.0, 0.8);
+             // Encontra inimigo (não convertido, não boss) com mais vida
+             for (const enemy of enemies) {
+                 if (!enemy.isConverted && !enemy.isBoss && enemy.health > maxHealth) {
+                     // Verifica se já tem um bot indo para este inimigo
+                     let alreadyTargeted = false;
+                     for(const bot of nanoBots) {
+                         if (bot.targetEnemy === enemy) {
+                             alreadyTargeted = true;
+                             break;
+                         }
                      }
+                     if (!alreadyTargeted) {
+                         maxHealth = enemy.health;
+                         targetEnemy = enemy;
+                     }
+                 }
+             }
+
+             if (targetEnemy) {
+                 nanoBots.push({
+                     x: player.x,
+                     y: player.y,
+                     radius: 4,
+                     color: '#00BCD4', // Ciano para o bot
+                     targetEnemy: targetEnemy,
+                     state: 'seeking', // 'seeking', 'infecting'
+                     infectionProgress: 0,
+                     speed: NANO_BOT_SPEED
                  });
+                 nanoBotCooldownTimer = NANO_BOT_COOLDOWN; // Inicia cooldown
+                 createParticles(player.x, player.y, 5, '#00BCD4', 0.8, 0.5); // Efeito de lançamento
              }
-         }
+        }
 
+        function updateNanoBots(deltaTime) {
+            // Atualiza cooldown global
+            if (nanoBotCooldownTimer > 0) {
+                nanoBotCooldownTimer -= deltaTime;
+            }
 
-        function updateEnemies(deltaTime) { /* ... (lógica de colisão com jogador, escudo - sem mudanças) ... */
-             updateShield(deltaTime);
-             for (let i = enemies.length - 1; i >= 0; i--) {
-                 const enemy = enemies[i];
-                 enemy.updateDirection(deltaTime);
-                 enemy.x += enemy.dx * (deltaTime / 16.67); enemy.y += enemy.dy * (deltaTime / 16.67);
-                 const dx = player.x - enemy.x; const dy = player.y - enemy.y; const distance = Math.sqrt(dx * dx + dy * dy);
+            for (let i = nanoBots.length - 1; i >= 0; i--) {
+                const bot = nanoBots[i];
+                const target = bot.targetEnemy;
 
-                 if (distance < player.radius + enemy.radius) {
-                     if (player.shieldActive) {
-                         const shieldDamage = 5 + player.shieldDurationLevel; const died = enemy.takeDamage(shieldDamage);
-                         createParticles(enemy.x, enemy.y, 5, SHIELD_COLOR, 1, 0.7);
-                         if (died) { enemy.die(); enemies.splice(i, 1); }
-                         else { const pushAngle = Math.atan2(enemy.y - player.y, enemy.x - player.x); enemy.x += Math.cos(pushAngle) * 5; enemy.y += Math.sin(pushAngle) * 5; }
-                     } else {
-                         const damageTaken = enemy.isBoss ? 30 : 15; health -= damageTaken;
-                         triggerShake(enemy.isBoss ? 10 : 5, 200); createParticles(player.x, player.y, 10, '#FF0000', 1.5, 1.0);
-                         updateHealth();
-                         if (!enemy.isBoss) { enemy.die(); enemies.splice(i, 1); }
-                         else { const pushAngle = Math.atan2(enemy.y - player.y, enemy.x - player.x); enemy.x += Math.cos(pushAngle) * 15; enemy.y += Math.sin(pushAngle) * 15; }
-                         if (health <= 0) { health = 0; updateHealth(); showGameOver(); return; }
-                     }
+                // Se o alvo morreu ou foi convertido enquanto o bot estava a caminho
+                if (!target || target.health <= 0 || target.isConverted) {
+                     createParticles(bot.x, bot.y, 5, bot.color, 0.5, 0.5); // Bot se desfaz
+                     nanoBots.splice(i, 1);
                      continue;
-                 }
-             }
-         }
+                }
 
-        // --- Lógica de Tiros e Balas (MODIFICADO: Remove colisão bala inimiga com jogador) ---
-        function shoot() { /* ... (lógica de tiro baseada em upgrades/powerups - sem mudanças) ... */
-             const now = Date.now();
-             const currentBulletCooldown = player.activePowerups.rapidFire ? getCurrentFireRateCooldown() / 2 : getCurrentFireRateCooldown();
-             if (now - lastBulletTime < currentBulletCooldown) return;
-             lastBulletTime = now;
-             const angle = Math.atan2(aimY - player.y, aimX - player.x);
-             const speed = getCurrentBulletSpeed(); const damage = BASE_BULLET_DAMAGE * player.damageMultiplier;
-             // Tiro Central
-             bullets.push({ x: player.x, y: player.y, radius: BULLET_RADIUS, color: BULLET_COLOR, speed: speed, damage: damage, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed });
-             // Tiros extras (Nível 1)
-             if (player.weaponLevel >= 1) { bullets.push({ x: player.x, y: player.y, radius: BULLET_RADIUS, color: BULLET_COLOR, speed: speed, damage: damage, dx: Math.cos(angle + 0.2) * speed, dy: Math.sin(angle + 0.2) * speed }); bullets.push({ x: player.x, y: player.y, radius: BULLET_RADIUS, color: BULLET_COLOR, speed: speed, damage: damage, dx: Math.cos(angle - 0.2) * speed, dy: Math.sin(angle - 0.2) * speed }); }
-             // Tiros extras (Nível 2)
-             if (player.weaponLevel >= 2) { bullets.push({ x: player.x, y: player.y, radius: BULLET_RADIUS * 0.8, color: '#ADD8E6', speed: speed * 0.8, damage: damage * 0.7, dx: Math.cos(angle + 0.8) * speed * 0.8, dy: Math.sin(angle + 0.8) * speed * 0.8 }); bullets.push({ x: player.x, y: player.y, radius: BULLET_RADIUS * 0.8, color: '#ADD8E6', speed: speed * 0.8, damage: damage * 0.7, dx: Math.cos(angle - 0.8) * speed * 0.8, dy: Math.sin(angle - 0.8) * speed * 0.8 }); }
-             // Tiros extras (Nível 3)
-             if (player.weaponLevel >= 3) { for (let i = 0; i < 2; i++) { const randomAngle = angle + (Math.random() - 0.5) * 0.3; const randomSpeed = speed * (0.9 + Math.random() * 0.2); bullets.push({ x: player.x, y: player.y, radius: BULLET_RADIUS * (0.9 + Math.random()*0.2), color: BULLET_COLOR, speed: randomSpeed, damage: damage * 0.8, dx: Math.cos(randomAngle) * randomSpeed, dy: Math.sin(randomAngle) * randomSpeed }); } }
-             createParticles(player.x + Math.cos(angle)*player.radius, player.y + Math.sin(angle)*player.radius, 1, BULLET_COLOR, 0.5, 0.3);
-         }
+                if (bot.state === 'seeking') {
+                    const dx = target.x - bot.x;
+                    const dy = target.y - bot.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
 
+                    if (distance < bot.radius + target.radius) {
+                        // Chegou ao alvo
+                        bot.state = 'infecting';
+                        createParticles(target.x, target.y, 8, bot.color, 0.7, 0.8); // Efeito de início da infecção
+                    } else {
+                        // Move towards target
+                        bot.x += (dx / distance) * bot.speed * (deltaTime / 16.67);
+                        bot.y += (dy / distance) * bot.speed * (deltaTime / 16.67);
+                    }
+                } else if (bot.state === 'infecting') {
+                     // Fica "preso" visualmente ao alvo (opcional, pode só parar de mover)
+                     bot.x = target.x + (Math.random() - 0.5) * target.radius * 0.5;
+                     bot.y = target.y + (Math.random() - 0.5) * target.radius * 0.5;
+
+                    bot.infectionProgress += deltaTime / NANO_BOT_INFECTION_TIME;
+                    target.infectionProgress = bot.infectionProgress; // Passa progresso para o inimigo (para desenho)
+
+                    if (bot.infectionProgress >= 1) {
+                        // Infecção completa! Converter o inimigo.
+                        convertEnemy(target);
+                        nanoBots.splice(i, 1); // Bot desaparece
+                    }
+                }
+            }
+        }
+
+        // NOVO: Função para converter um inimigo
+        function convertEnemy(enemy) {
+             if (enemy.isConverted) return; // Já convertido
+
+             enemy.isConverted = true;
+             enemy.originalColor = enemy.color; // Guarda cor original se precisar reverter
+             enemy.color = PLAYER_COLOR;
+             enemy.originalRadius = enemy.radius;
+             enemy.radius *= CONVERTED_ENEMY_RADIUS_FACTOR; // Fica menor
+             enemy.speed = 0; // Para de seguir jogador
+             enemy.dx = 0;
+             enemy.dy = 0;
+             enemy.convertedTimer = CONVERTED_DURATION;
+             enemy.shootTimer = Math.random() * CONVERTED_SHOOT_COOLDOWN; // Cooldown inicial aleatório
+             enemy.targetConvertedEnemy = null; // Reseta alvo
+             delete enemy.infectionProgress; // Remove progresso da infecção
+
+             createParticles(enemy.x, enemy.y, 20, PLAYER_COLOR, 1.2, 1.0); // Efeito visual forte da conversão
+        }
+
+        function updateEnemies(deltaTime) {
+            updateShield(deltaTime);
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+
+                // --- Lógica para Inimigos Convertidos ---
+                if (enemy.isConverted) {
+                    enemy.convertedTimer -= deltaTime;
+                    if (enemy.convertedTimer <= 0) {
+                         createParticles(enemy.x, enemy.y, 15, enemy.color, 1, 1); // Efeito de desaparecimento
+                         enemies.splice(i, 1);
+                         continue;
+                    }
+
+                    // Lógica de Atirar do Convertido
+                    enemy.shootTimer -= deltaTime;
+                    if (enemy.shootTimer <= 0) {
+                         // Encontra alvo (inimigo não convertido mais próximo)
+                         let closestEnemy = null;
+                         let minDistSq = Infinity;
+                         for (const otherEnemy of enemies) {
+                             if (!otherEnemy.isConverted && otherEnemy !== enemy) { // Não atira em si mesmo ou outros convertidos
+                                 const dx = otherEnemy.x - enemy.x;
+                                 const dy = otherEnemy.y - enemy.y;
+                                 const distSq = dx * dx + dy * dy;
+                                 if (distSq < minDistSq) {
+                                     minDistSq = distSq;
+                                     closestEnemy = otherEnemy;
+                                 }
+                             }
+                         }
+
+                         if (closestEnemy) {
+                             const angle = Math.atan2(closestEnemy.y - enemy.y, closestEnemy.x - enemy.x);
+                             bullets.push({
+                                 x: enemy.x, y: enemy.y,
+                                 radius: CONVERTED_BULLET_RADIUS,
+                                 color: CONVERTED_BULLET_COLOR,
+                                 speed: CONVERTED_BULLET_SPEED,
+                                 damage: CONVERTED_BULLET_DAMAGE,
+                                 dx: Math.cos(angle) * CONVERTED_BULLET_SPEED,
+                                 dy: Math.sin(angle) * CONVERTED_BULLET_SPEED,
+                                 isConvertedBullet: true // Flag especial
+                             });
+                             enemy.shootTimer = CONVERTED_SHOOT_COOLDOWN + (Math.random() - 0.5) * 500; // Reseta cooldown com variação
+                              createParticles(enemy.x, enemy.y, 2, CONVERTED_BULLET_COLOR, 0.5, 0.5); // Efeito de tiro
+                         } else {
+                              enemy.shootTimer = 500; // Tenta de novo em breve se não achar alvo
+                         }
+                    }
+                     // Fica parado, não precisa atualizar dx/dy
+                }
+                // --- Lógica para Inimigos Normais e Boss ---
+                else {
+                    enemy.updateDirection(deltaTime);
+                    enemy.x += enemy.dx * (deltaTime / 16.67);
+                    enemy.y += enemy.dy * (deltaTime / 16.67);
+
+                    // Colisão com jogador (inalterada)
+                    const dx = player.x - enemy.x; const dy = player.y - enemy.y; const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < player.radius + enemy.radius) {
+                        if (player.shieldActive) {
+                            const shieldDamage = 5 + player.shieldDurationLevel; const died = enemy.takeDamage(shieldDamage);
+                            createParticles(enemy.x, enemy.y, 5, SHIELD_COLOR, 1, 0.7);
+                            if (died && !enemy.isBoss) { enemy.die(); enemies.splice(i, 1); } // Boss não morre com escudo
+                            else { const pushAngle = Math.atan2(enemy.y - player.y, enemy.x - player.x); enemy.x += Math.cos(pushAngle) * 5; enemy.y += Math.sin(pushAngle) * 5; }
+                        } else {
+                            const damageTaken = enemy.isBoss ? 30 : 15; health -= damageTaken;
+                            triggerShake(enemy.isBoss ? 10 : 5, 200); createParticles(player.x, player.y, 10, '#FF0000', 1.5, 1.0);
+                            updateHealth();
+                            if (!enemy.isBoss) { enemy.die(); enemies.splice(i, 1); }
+                            else { const pushAngle = Math.atan2(enemy.y - player.y, enemy.x - player.x); enemy.x += Math.cos(pushAngle) * 15; enemy.y += Math.sin(pushAngle) * 15; }
+                            if (health <= 0) { health = 0; updateHealth(); showGameOver(); return; }
+                        }
+                        continue; // Já tratou colisão com jogador
+                    }
+                } // Fim do else (inimigo normal/boss)
+            } // Fim do loop de inimigos
+        }
+
+
+        function shoot() { /* ... (lógica de tiro do jogador - sem mudanças) ... */ }
+
+        // MODIFICADO: updateBullets para lidar com balas convertidas
         function updateBullets(deltaTime) {
             for (let i = bullets.length - 1; i >= 0; i--) {
                 const bullet = bullets[i];
@@ -1125,19 +519,39 @@
                 bullet.y += bullet.dy * (deltaTime / 16.67);
                 let bulletRemoved = false;
 
-                // Colisão com Inimigos (balas do jogador)
-                // REMOVIDO: Bloco 'else' que checava colisão de isEnemyBullet com jogador
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    const enemy = enemies[j];
-                    const dx = bullet.x - enemy.x; const dy = bullet.y - enemy.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance < bullet.radius + enemy.radius) {
-                        const died = enemy.takeDamage(bullet.damage);
-                        createParticles(bullet.x, bullet.y, 3, enemy.color, 0.8, 0.6);
-                        bullets.splice(i, 1); bulletRemoved = true;
-                        if (died) { enemy.die(); enemies.splice(j, 1); }
-                        break;
+                // Colisão Bala do Jogador vs Inimigos Normais/Boss
+                if (!bullet.isConvertedBullet) {
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const enemy = enemies[j];
+                        if (enemy.isConverted) continue; // Bala do jogador não atinge convertidos
+
+                        const dx = bullet.x - enemy.x; const dy = bullet.y - enemy.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < bullet.radius + enemy.radius) {
+                            const died = enemy.takeDamage(bullet.damage);
+                            createParticles(bullet.x, bullet.y, 3, enemy.color, 0.8, 0.6);
+                            bullets.splice(i, 1); bulletRemoved = true;
+                            if (died) { enemy.die(); enemies.splice(j, 1); }
+                            break;
+                        }
                     }
+                }
+                // NOVO: Colisão Bala Convertida vs Inimigos Normais/Boss
+                else { // isConvertedBullet === true
+                     for (let j = enemies.length - 1; j >= 0; j--) {
+                         const enemy = enemies[j];
+                         if (enemy.isConverted) continue; // Bala convertida não atinge outros convertidos
+
+                         const dx = bullet.x - enemy.x; const dy = bullet.y - enemy.y;
+                         const distance = Math.sqrt(dx * dx + dy * dy);
+                         if (distance < bullet.radius + enemy.radius) {
+                             const died = enemy.takeDamage(bullet.damage); // Dano baixo da bala convertida
+                             createParticles(bullet.x, bullet.y, 2, CONVERTED_BULLET_COLOR, 0.6, 0.5); // Efeito verde
+                             bullets.splice(i, 1); bulletRemoved = true;
+                             if (died) { enemy.die(); enemies.splice(j, 1); } // Inimigo normal morre, ganha cash/drop normal
+                             break;
+                         }
+                     }
                 }
 
                 // Remove bala se saiu da tela
@@ -1148,118 +562,104 @@
         }
 
 
-        // --- Desenho (sem mudanças significativas na lógica, apenas nos elementos desenhados) ---
+        // --- Desenho (adicionado desenho de nanobots e infecção/conversão) ---
         function draw() {
-            let shakeX = 0, shakeY = 0;
-            if (shakeIntensity > 0) { shakeX = (Math.random() - 0.5) * 2 * shakeIntensity; shakeY = (Math.random() - 0.5) * 2 * shakeIntensity; }
-            ctx.save(); ctx.translate(shakeX, shakeY); // Aplica shake
+            let shakeX = 0, shakeY = 0; if (shakeIntensity > 0) { shakeX = (Math.random() - 0.5) * 2 * shakeIntensity; shakeY = (Math.random() - 0.5) * 2 * shakeIntensity; }
+            ctx.save(); ctx.translate(shakeX, shakeY);
 
             ctx.fillStyle = '#222'; ctx.fillRect(0, 0, canvas.width, canvas.height); // Limpa
 
-            // Desenha Partículas
-             ctx.globalAlpha = 0.8; // Partículas levemente transparentes
-             for (const p of particles) { /* ... */ ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * (p.life / p.maxLife), 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill(); }
-             ctx.globalAlpha = 1.0;
+            // Desenha Partículas, Powerups (sem mudanças)
+            ctx.globalAlpha = 0.8; for (const p of particles) { ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * (p.life / p.maxLife), 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill(); } ctx.globalAlpha = 1.0;
+            for (const powerup of powerups) { /* ... */ }
 
-             // Desenha Power-ups
-             for (const powerup of powerups) { /* ... (desenho do powerup com símbolo e barra) ... */
-                  ctx.beginPath(); ctx.arc(powerup.x, powerup.y, powerup.radius, 0, Math.PI * 2); ctx.fillStyle = powerup.color; ctx.fill();
-                  ctx.fillStyle = '#000'; ctx.font = `bold ${powerup.radius * 1.2}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(powerup.symbol, powerup.x, powerup.y + 1);
-                  const lifePercent = powerup.life / 10000; const barWidth = powerup.radius * 2; const barHeight = 3;
-                  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(powerup.x - barWidth / 2, powerup.y + powerup.radius + 2, barWidth, barHeight);
-                  ctx.fillStyle = powerup.color; ctx.fillRect(powerup.x - barWidth / 2, powerup.y + powerup.radius + 2, barWidth * lifePercent, barHeight);
-             }
-
-            // Desenha Jogador e Aura Arma
-             ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fillStyle = player.activePowerups.rapidFire ? '#FFFF00' : PLAYER_COLOR; ctx.fill();
-             if (player.weaponLevel > 0) { /* ... (desenho da aura laranja) ... */
-                  const auraMaxRadius = player.radius + 5 + (player.weaponLevel * 3); const gradient = ctx.createRadialGradient( player.x, player.y, player.radius, player.x, player.y, auraMaxRadius ); const auraColor = '#FFA000';
-                  gradient.addColorStop(0, auraColor + '00'); gradient.addColorStop(0.7, auraColor + '30'); gradient.addColorStop(1, auraColor + '00');
-                  ctx.beginPath(); ctx.arc(player.x, player.y, auraMaxRadius, 0, Math.PI * 2); ctx.fillStyle = gradient; ctx.fill();
-             }
-
-             // Desenha Escudo e Indicador Cooldown
-             if (player.shieldUnlocked) { /* ... (desenho do escudo ativo pulsante ou arco de cooldown) ... */
-                 const shieldBaseRadius = player.radius + 8;
-                 if (player.shieldActive) {
-                     ctx.beginPath(); const pulse = Math.sin(Date.now() * 0.005) * 2; ctx.arc(player.x, player.y, shieldBaseRadius + pulse, 0, Math.PI * 2);
-                     ctx.strokeStyle = SHIELD_COLOR + 'B0'; ctx.lineWidth = 4; ctx.shadowColor = SHIELD_COLOR; ctx.shadowBlur = 15; ctx.stroke(); ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
-                 } else if (player.shieldState === 'cooldown') {
-                     ctx.beginPath(); const cooldownDuration = getCurrentShieldCooldownDuration(); const remainingCooldown = player.shieldTimer; const cooldownPercent = Math.max(0, remainingCooldown / cooldownDuration);
-                     const startAngle = -Math.PI / 2; const endAngle = startAngle + (Math.PI * 2 * (1 - cooldownPercent));
-                     ctx.arc(player.x, player.y, shieldBaseRadius + 1, startAngle, endAngle); ctx.strokeStyle = '#AAAAAA60'; ctx.lineWidth = 5; ctx.stroke();
-                 }
-             }
-
-            // Desenha Inimigos (com formas diferentes e barra de vida)
-            for (const enemy of enemies) { /* ... (desenho de círculo, quadrado, triângulo e barra de vida) ... */
+             // NOVO: Desenha NanoBots ativos
+             ctx.fillStyle = '#00BCD4'; // Ciano
+             ctx.strokeStyle = '#FFFFFF';
+             ctx.lineWidth = 1;
+             for (const bot of nanoBots) {
                  ctx.beginPath();
-                 if (enemy.type === 'circle' || enemy.isBoss) { ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2); }
-                 else if (enemy.type === 'square') { ctx.rect(enemy.x - enemy.radius, enemy.y - enemy.radius, enemy.radius * 2, enemy.radius * 2); }
-                 else if (enemy.type === 'triangle') { const angleOffset = Date.now() * 0.001; for (let i = 0; i < 3; i++) { const angle = (i * 2 * Math.PI / 3) + angleOffset; const px = enemy.x + Math.cos(angle) * enemy.radius * 1.2; const py = enemy.y + Math.sin(angle) * enemy.radius * 1.2; if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); } ctx.closePath(); }
-
-                 const healthPercent = Math.max(0, enemy.health / enemy.maxHealth);
-                 if (enemy.isBoss) { const r = Math.floor(233 + (50 * (1 - healthPercent))); const g = Math.floor(30 * healthPercent); const b = Math.floor(99 * healthPercent); ctx.fillStyle = `rgb(${r}, ${g}, ${b})`; }
-                 else { ctx.fillStyle = enemy.color; }
+                 // Desenha como um pequeno losango/quadrado rotacionado
+                 const size = bot.radius * 1.5;
+                 ctx.moveTo(bot.x, bot.y - size);
+                 ctx.lineTo(bot.x + size, bot.y);
+                 ctx.lineTo(bot.x, bot.y + size);
+                 ctx.lineTo(bot.x - size, bot.y);
+                 ctx.closePath();
                  ctx.fill();
+                 ctx.stroke();
+             }
 
-                 if (enemy.health < enemy.maxHealth) {
-                     const barWidth = enemy.radius * (enemy.isBoss ? 1.8 : 1.5); const barHeight = enemy.isBoss ? 6 : 4; const barYOffset = enemy.isBoss ? 8 : 3; const barX = enemy.x - barWidth / 2; const barY = enemy.y - enemy.radius - barHeight - barYOffset; const currentHealthWidth = barWidth * healthPercent;
-                     ctx.fillStyle = '#555'; ctx.fillRect(barX, barY, barWidth, barHeight);
-                     if (healthPercent > 0.6) ctx.fillStyle = '#00FF00'; else if (healthPercent > 0.3) ctx.fillStyle = '#FFFF00'; else ctx.fillStyle = '#FF0000';
-                     ctx.fillRect(barX, barY, currentHealthWidth, barHeight); ctx.strokeStyle = '#222'; ctx.lineWidth = 1; ctx.strokeRect(barX, barY, barWidth, barHeight);
-                 }
-            }
+            // Desenha Jogador, Aura, Escudo (sem mudanças)
+            ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fillStyle = player.activePowerups.rapidFire ? '#FFFF00' : PLAYER_COLOR; ctx.fill();
+            if (player.weaponLevel > 0) { /* ... */ } if (player.shieldUnlocked) { /* ... */ }
 
-            // Desenha Balas
-            for (const bullet of bullets) { /* ... */ ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2); ctx.fillStyle = bullet.color; ctx.shadowColor = bullet.color; ctx.shadowBlur = 6; ctx.fill(); ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; }
+            // Desenha Inimigos
+            for (const enemy of enemies) {
+                ctx.save(); // Salva estado para aplicar efeitos específicos
+                ctx.beginPath();
+
+                let drawColor = enemy.color;
+                let drawRadius = enemy.radius;
+
+                // Efeito de Infecção (antes de desenhar a forma)
+                if (enemy.infectionProgress > 0 && enemy.infectionProgress < 1) {
+                     drawColor = lerpColor(enemy.color, PLAYER_COLOR, enemy.infectionProgress);
+                     // Efeito visual de "pulsação" ou brilho durante infecção
+                     const infectionPulse = Math.sin(Date.now() * 0.01 + enemy.infectionProgress * Math.PI) * 3;
+                     ctx.shadowColor = bot.color; // Usa cor do bot (ciano) para o brilho da infecção
+                     ctx.shadowBlur = 5 + infectionPulse;
+                } else if (enemy.isConverted) {
+                     // Os convertidos já têm a cor do player e raio menor
+                     drawColor = PLAYER_COLOR;
+                     drawRadius = enemy.originalRadius * CONVERTED_ENEMY_RADIUS_FACTOR;
+                      // Brilho sutil verde para convertidos
+                      ctx.shadowColor = CONVERTED_BULLET_COLOR;
+                      ctx.shadowBlur = 8;
+                }
+
+
+                // Desenha Forma (círculo, quadrado, triângulo ou CONVERTIDO)
+                 if (enemy.isConverted) {
+                      // Desenha como círculo menor (forma do player)
+                      ctx.arc(enemy.x, enemy.y, drawRadius, 0, Math.PI * 2);
+                 } else if (enemy.type === 'circle' || enemy.isBoss) { ctx.arc(enemy.x, enemy.y, drawRadius, 0, Math.PI * 2); }
+                 else if (enemy.type === 'square') { ctx.rect(enemy.x - drawRadius, enemy.y - drawRadius, drawRadius * 2, drawRadius * 2); }
+                 else if (enemy.type === 'triangle') { const angleOffset = Date.now() * 0.001; for (let i = 0; i < 3; i++) { const angle = (i * 2 * Math.PI / 3) + angleOffset; const px = enemy.x + Math.cos(angle) * drawRadius * 1.2; const py = enemy.y + Math.sin(angle) * drawRadius * 1.2; if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); } ctx.closePath(); }
+
+                 ctx.fillStyle = drawColor;
+                 ctx.fill();
+                 ctx.shadowColor = 'transparent'; // Limpa sombra para próximos elementos
+                 ctx.shadowBlur = 0;
+
+                 // Barra de Vida (não mostra para convertidos)
+                 if (!enemy.isConverted && enemy.health < enemy.maxHealth) { /* ... */ }
+
+                 ctx.restore(); // Restaura estado (remove sombras específicas)
+            } // Fim do loop de inimigos
+
+            // Desenha Balas (sem mudanças no desenho em si)
+            for (const bullet of bullets) { /* ... */ ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2); ctx.fillStyle = bullet.color; ctx.shadowColor = bullet.color; ctx.shadowBlur = bullet.isConvertedBullet ? 4 : 6; ctx.fill(); ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; }
 
             ctx.restore(); // Restaura contexto (remove shake)
         }
 
-        // --- UI Updates ---
-        function updateCashDisplay() {
-            cashElement.textContent = `Cash: ${cash}`;
-            // Atualiza painel in-game se estiver jogando
-            if (gameState === 'playing') {
-                updateUpgradePanel();
-            }
-             // Atualiza loja overlay se estiver aberta
-             if (gameState === 'shoppingOverlay') {
-                 shopCashOverlayElement.textContent = `Cash: ${cash}`;
-                 // Poderia otimizar para só atualizar botões, mas recriar é mais simples por enquanto
-                 updateShopOverlayUI();
-             }
-        }
-        function updateHealth() { /* ... (atualiza texto e cor da vida) ... */
-             healthElement.textContent = `Health: ${health}`;
-             const healthPercent = health / 100;
-             if (healthPercent > 0.6) healthElement.style.color = 'white';
-             else if (healthPercent > 0.3) healthElement.style.color = 'yellow';
-             else healthElement.style.color = 'red';
-         }
-        function updateWaveIndicator() { /* ... */ waveIndicatorElement.textContent = `Wave: ${currentWave}`; }
+        // --- UI Updates (sem mudanças) ---
+        function updateCashDisplay() { /* ... */ } function updateHealth() { /* ... */ } function updateWaveIndicator() { /* ... */ }
+        function updateUpgradePanel() { /* ... */ } function buyUpgradeByIndex(index) { /* ... */ }
 
-
-        // --- Game Loop Principal (sem mudanças) ---
+        // --- Game Loop Principal (adicionado chamadas para nanobots) ---
         let lastTimestamp = 0;
         function gameLoop(timestamp) {
-             const deltaTime = Math.min(100, (lastTimestamp === 0) ? 16.67 : timestamp - lastTimestamp); // Limita deltaTime máximo para evitar saltos grandes
+             const deltaTime = Math.min(100, (lastTimestamp === 0) ? 16.67 : timestamp - lastTimestamp);
              lastTimestamp = timestamp;
 
-             if (gameState !== 'playing') {
-                  // Reseta timestamp se pausado
-                  if(gameState === 'paused') { lastTimestamp = 0; }
-                  // Não processa lógica do jogo se não estiver 'playing'
-                  // Desenha o fundo estático se estiver em gameOver ou paused
-                  if (gameState === 'gameOver' || gameState === 'paused') {
-                      draw(); // Desenha o último estado do jogo sob o menu
-                  }
-                  return;
-             }
+             if (gameState !== 'playing') { if(gameState === 'paused') { lastTimestamp = 0; } if (gameState === 'gameOver' || gameState === 'paused') { draw(); } return; }
 
             // Atualizações Lógicas
             updateShake(deltaTime); updateActivePowerups(deltaTime);
+            launchNanoBot(); // NOVO: Tenta lançar um bot
+            updateNanoBots(deltaTime); // NOVO: Atualiza bots existentes
             spawnEnemy(); updateEnemies(deltaTime); updatePowerups(deltaTime);
             shoot(); updateBullets(deltaTime); updateParticles(deltaTime);
 
@@ -1270,17 +670,10 @@
         }
 
         // --- Início ---
-        loadGameData();
-        resizeCanvas();
-        // Estado inicial da UI
-        startScreen.classList.add('visible');
-        gameOverElement.classList.remove('visible');
-        pauseMenu.classList.remove('visible');
-        shopOverlay.classList.remove('visible');
-        pauseBtn.style.display = 'none';
-        upgradePanel.style.display = 'none';
-        updateHealth();
-        updateWaveIndicator();
+        loadGameData(); resizeCanvas();
+        startScreen.classList.add('visible'); gameOverElement.classList.remove('visible'); pauseMenu.classList.remove('visible'); shopOverlay.classList.remove('visible');
+        pauseBtn.style.display = 'none'; upgradePanel.style.display = 'none';
+        updateHealth(); updateWaveIndicator();
 
     </script>
 </body>

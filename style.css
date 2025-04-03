@@ -1,84 +1,322 @@
-/* Estilos CSS (sem mudanças significativas da v2, apenas ajustes menores se necessário) */
-body { margin: 0; overflow: hidden; touch-action: none; background-color: #111; display: flex; justify-content: center; align-items: center; height: 100vh; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-canvas { display: block; background-color: #222; position: relative; }
-#gameUI { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-#cashDisplay { position: absolute; top: 20px; left: 20px; font-size: 24px; text-shadow: 1px 1px 2px black; color: #FFEB3B; font-weight: bold; }
-#health { position: absolute; top: 20px; right: 20px; font-size: 24px; text-shadow: 1px 1px 2px black; }
-#waveIndicator { position: absolute; top: 55px; left: 20px; font-size: 18px; color: #aaa; text-shadow: 1px 1px 1px black; }
-.menuOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 48px; pointer-events: auto; z-index: 10; backdrop-filter: blur(4px); transition: opacity 0.3s ease, visibility 0.3s ease; opacity: 0; visibility: hidden; }
-.menuOverlay.visible { opacity: 1; visibility: visible; }
-.menuOverlay h1, .menuOverlay h2 { margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-.menuOverlay button { pointer-events: auto; margin-top: 15px; padding: 12px 25px; font-size: 20px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease, transform 0.1s ease; min-width: 150px; }
-.menuOverlay button:hover:not(:disabled) { background-color: #45a049; transform: scale(1.05); }
-.menuOverlay button:active:not(:disabled) { transform: scale(0.98); }
-.menuOverlay button:disabled { background-color: #555; color: #999; cursor: not-allowed; transform: none; }
-#startScreen {}
-#startScreenButtons { display: flex; gap: 20px; }
-#gameOver {}
-#pauseMenu {}
-.gameButton { pointer-events: auto; position: absolute; padding: 10px 15px; font-size: 16px; background-color: rgba(255, 255, 255, 0.3); color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; z-index: 5; }
-.gameButton:hover { background-color: rgba(255, 255, 255, 0.5); }
-#pauseBtn { bottom: 20px; right: 20px; }
-#upgradePanel { position: absolute; bottom: 20px; left: 20px; background-color: rgba(0, 0, 0, 0.7); padding: 10px 15px; border-radius: 8px; z-index: 5; pointer-events: auto; max-width: 350px; display: none; transition: opacity 0.3s ease; }
-#upgradePanel h3 { margin-top: 0; margin-bottom: 10px; font-size: 16px; color: #FFEB3B; text-align: center; }
-.upgradeItem { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
-.upgradeItem .info { flex-grow: 1; margin-right: 10px; }
-.upgradeItem .name { font-weight: bold; }
-.upgradeItem .cost { font-size: 13px; color: #FFEB3B; margin-left: 5px; }
-.upgradeItem .details { display: block; font-size: 11px; opacity: 0.8; } /* Classe para descrição */
-.upgradeItem button { padding: 4px 8px; font-size: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; min-width: 60px; transition: background-color 0.2s ease; }
-.upgradeItem button:hover:not(:disabled) { background-color: #45a049; }
-.upgradeItem button:disabled { background-color: #555; color: #999; cursor: not-allowed; }
-.upgradeItem.purchased button, .upgradeItem.maxed button { background-color: #0a631a; color: #ccc; cursor: default; }
-.upgradeItem.purchased button:hover, .upgradeItem.maxed button:hover { background-color: #0a631a; }
-#shopOverlay {}
-#shopOverlay h2 { font-size: 40px; }
-#shopCashOverlay { font-size: 24px; margin-bottom: 20px; color: #FFEB3B; font-weight: bold; }
-#shopItemsContainerOverlay { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; margin-bottom: 20px; max-width: 90%; max-height: 60vh; overflow-y: auto; align-items: center; padding: 0 10px; }
-.shopItemOverlay { background-color: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; width: 90%; max-width: 450px; font-size: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-.shopItemOverlay .description { flex-grow: 1; text-align: left; margin-left: 10px; }
-.shopItemOverlay .description .name { font-weight: bold; display: block; margin-bottom: 3px; }
-.shopItemOverlay .description .details { font-size: 14px; opacity: 0.8; }
-.shopItemOverlay .cost { font-weight: bold; color: #FFEB3B; margin: 0 15px; font-size: 16px; }
-.shopItemOverlay button { font-size: 16px; padding: 8px 15px; margin-top: 0; min-width: 90px; }
-.shopItemOverlay.purchased button, .shopItemOverlay.maxed button { background-color: #0a631a; color: #ccc; cursor: default; }
-.shopItemOverlay.purchased button:hover, .shopItemOverlay.maxed button:hover { background-color: #0a631a; }
+/* Estilos CSS */
+body {
+    margin: 0;
+    overflow: hidden;
+    touch-action: none;
+    background-color: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+canvas {
+    display: block;
+    background-color: #222;
+    position: relative; /* Needed for absolute UI positioning */
+}
+#gameUI {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allow clicks/touches to pass through to canvas by default */
+}
+#cashDisplay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 24px;
+    text-shadow: 1px 1px 2px black;
+    color: #FFEB3B;
+    font-weight: bold;
+}
+#health {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 24px;
+    text-shadow: 1px 1px 2px black;
+    color: #FFFFFF; /* Start white */
+}
+#waveIndicator {
+    position: absolute;
+    top: 55px;
+    left: 20px;
+    font-size: 18px;
+    color: #aaa;
+    text-shadow: 1px 1px 1px black;
+}
+#enemiesRemaining { /* Added style for enemy count */
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    font-size: 16px;
+    color: #ccc;
+    text-shadow: 1px 1px 1px black;
+    display: none; /* Initially hidden */
+}
+.menuOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 48px;
+    pointer-events: auto; /* Menus should be interactive */
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+}
+.menuOverlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+.menuOverlay h1, .menuOverlay h2 {
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+.menuOverlay button {
+    pointer-events: auto; /* Buttons inside menus are interactive */
+    margin-top: 15px;
+    padding: 12px 25px;
+    font-size: 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    min-width: 150px;
+}
+.menuOverlay button:hover:not(:disabled) {
+    background-color: #45a049;
+    transform: scale(1.05);
+}
+.menuOverlay button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+.menuOverlay button:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+}
+#startScreen {} /* Specific styling if needed */
+#startScreenButtons {
+    display: flex;
+    gap: 20px;
+}
+#gameOver {} /* Specific styling if needed */
+#pauseMenu {} /* Specific styling if needed */
+.gameButton { /* For buttons like Pause */
+    pointer-events: auto; /* These buttons need to be clickable */
+    position: absolute;
+    padding: 10px 15px;
+    font-size: 16px;
+    background-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    z-index: 5;
+}
+.gameButton:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+#pauseBtn {
+    bottom: 20px;
+    right: 20px;
+}
+#upgradePanel {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px 15px;
+    border-radius: 8px;
+    z-index: 5;
+    pointer-events: auto; /* Allow clicks on the panel */
+    max-width: 350px;
+    display: none; /* Initially hidden */
+    opacity: 0; /* Start faded out */
+    transition: opacity 0.3s ease;
+}
+#upgradePanel h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #FFEB3B;
+    text-align: center;
+}
+.upgradeItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+.upgradeItem .info {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+.upgradeItem .name {
+    font-weight: bold;
+}
+.upgradeItem .cost {
+    font-size: 13px;
+    color: #FFEB3B;
+    margin-left: 5px; /* Space between name and cost */
+}
+.upgradeItem .details {
+    display: block;
+    font-size: 11px;
+    opacity: 0.8;
+}
+.upgradeItem button {
+    padding: 4px 8px;
+    font-size: 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 60px;
+    transition: background-color 0.2s ease;
+    pointer-events: auto; /* Ensure buttons are clickable */
+}
+.upgradeItem button:hover:not(:disabled) {
+    background-color: #45a049;
+}
+.upgradeItem button:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+}
+.upgradeItem.purchased button, .upgradeItem.maxed button {
+    background-color: #0a631a; /* Darker green for owned/maxed */
+    color: #ccc;
+    cursor: default;
+}
+.upgradeItem.purchased button:hover, .upgradeItem.maxed button:hover {
+    background-color: #0a631a; /* No hover effect */
+}
+#shopOverlay {} /* Specific styling if needed */
+#shopOverlay h2 {
+    font-size: 40px;
+}
+#shopCashOverlay {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #FFEB3B;
+    font-weight: bold;
+}
+#shopItemsContainerOverlay {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    width: 90%; /* Use percentage for better scaling */
+    max-width: 500px; /* Set a max width */
+    max-height: 60vh; /* Limit height */
+    overflow-y: auto; /* Allow scrolling */
+    align-items: center; /* Center items horizontally */
+    padding: 0 10px;
+    box-sizing: border-box; /* Include padding in width */
+}
+.shopItemOverlay {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%; /* Take full width of container */
+    box-sizing: border-box; /* Include padding in width */
+    /* max-width: 450px; Removed, let container control width */
+    font-size: 18px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+.shopItemOverlay .description {
+    flex-grow: 1;
+    text-align: left;
+    margin-left: 10px; /* Space from potential icon */
+    margin-right: 10px; /* Space before cost */
+}
+.shopItemOverlay .description .name {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 3px;
+}
+.shopItemOverlay .description .details {
+    font-size: 14px;
+    opacity: 0.8;
+}
+.shopItemOverlay .cost {
+    font-weight: bold;
+    color: #FFEB3B;
+    margin: 0 15px; /* Keep margin */
+    font-size: 16px;
+    white-space: nowrap; /* Prevent cost text wrap */
+}
+.shopItemOverlay button {
+    font-size: 16px;
+    padding: 8px 15px;
+    margin-top: 0; /* Align better */
+    min-width: 90px; /* Keep min-width */
+    pointer-events: auto; /* Ensure clickable */
+    flex-shrink: 0; /* Prevent button shrinking */
+}
+.shopItemOverlay.purchased button, .shopItemOverlay.maxed button {
+    background-color: #0a631a;
+    color: #ccc;
+    cursor: default;
+}
+.shopItemOverlay.purchased button:hover, .shopItemOverlay.maxed button:hover {
+    background-color: #0a631a;
+}
 
 /* Media Query Mobile */
 @media (max-width: 600px) {
-    #cashDisplay, #health { font-size: 18px; top: 10px; } #cashDisplay { left: 10px; } #health { right: 10px; }
+    #cashDisplay, #health { font-size: 18px; top: 10px; }
+    #cashDisplay { left: 10px; }
+    #health { right: 10px; }
     #waveIndicator { font-size: 14px; top: 40px; left: 10px; }
+    #enemiesRemaining { font-size: 12px; top: 60px; left: 10px; } /* Adjust mobile position */
     #pauseBtn { font-size: 14px; padding: 8px 10px; bottom: 10px; right: 10px; }
     #upgradePanel { max-width: 220px; padding: 8px 10px; bottom: 10px; left: 10px; }
     #upgradePanel h3 { font-size: 14px; margin-bottom: 8px; }
-    .upgradeItem { font-size: 12px; margin-bottom: 5px; } .upgradeItem .info { margin-right: 5px; }
-    .upgradeItem .name { font-size: 11px; } .upgradeItem .cost { font-size: 11px; }
+    .upgradeItem { font-size: 12px; margin-bottom: 5px; }
+    .upgradeItem .info { margin-right: 5px; }
+    .upgradeItem .name { font-size: 11px; }
+    .upgradeItem .cost { font-size: 11px; margin-left: 3px;}
     .upgradeItem .details { display: none; } /* Esconde detalhes no painel mobile */
     .upgradeItem button { padding: 3px 6px; font-size: 10px; min-width: 45px; }
-    .menuOverlay { font-size: 36px; } .menuOverlay h1 { font-size: 42px; } .menuOverlay h2 { font-size: 38px; }
+    .menuOverlay { font-size: 36px; }
+    .menuOverlay h1 { font-size: 42px; }
+    .menuOverlay h2 { font-size: 38px; }
     .menuOverlay button { font-size: 18px; padding: 10px 20px; }
-    #shopItemsContainerOverlay { max-width: 100%; padding: 0 5px; }
-    .shopItemOverlay { width: 100%; font-size: 16px; padding: 10px; } .shopItemOverlay .description .details { font-size: 12px; }
-    .shopItemOverlay .cost { font-size: 14px; margin: 0 10px; } .shopItemOverlay button { font-size: 14px; padding: 6px 12px; min-width: 70px; }
+    #shopItemsContainerOverlay { max-width: 100%; padding: 0 5px; } /* Adjust padding */
+    .shopItemOverlay { width: 100%; font-size: 16px; padding: 10px; flex-wrap: wrap; } /* Allow wrap on mobile */
+    .shopItemOverlay .description { margin-left: 5px; margin-right: 5px; margin-bottom: 5px; }
+    .shopItemOverlay .description .details { font-size: 12px; }
+    .shopItemOverlay .cost { font-size: 14px; margin: 0 10px; }
+    .shopItemOverlay button { font-size: 14px; padding: 6px 12px; min-width: 70px; }
 }
  /* Estilo para inimigo infectado (pode melhorar) */
  .infected-glow {
+     /* Currently unused, infection effect is drawn on canvas */
      box-shadow: 0 0 15px 5px rgba(76, 175, 80, 0.7); /* Brilho verde */
  }
- #waveIndicator { position: absolute; top: 55px; left: 20px; font-size: 18px; color: #aaa; text-shadow: 1px 1px 1px black; }
-/* ADD THIS RULE */
-#enemiesRemaining { position: absolute; top: 80px; left: 20px; font-size: 16px; color: #ccc; text-shadow: 1px 1px 1px black; display: none; /* Initially hidden */ }
-
-.menuOverlay { /* ... rest of the CSS */ }
-
-/* ... other styles ... */
-
-/* Adjust mobile styles if needed */
-@media (max-width: 600px) {
-    /* ... other mobile styles ... */
-    #waveIndicator { font-size: 14px; top: 40px; left: 10px; }
-    #enemiesRemaining { font-size: 12px; top: 60px; left: 10px; } /* Adjust mobile position */
-    /* ... other mobile styles ... */
-}
-
-/* ... rest of the CSS ... */

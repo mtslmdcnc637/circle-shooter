@@ -13,6 +13,7 @@
         <div id="cashDisplay">Cash: 0</div>
         <div id="health">Health: 100</div>
         <div id="waveIndicator">Wave: 0</div>
+        <div id="enemiesRemaining">Enemies: 0</div> <!-- Added for enemy count -->
         <button id="pauseBtn" class="gameButton" style="display: none;">Pause</button>
 
         <!-- Painel de Upgrades In-Game (visível durante o jogo) -->
@@ -23,7 +24,7 @@
 
         <!-- Menus Overlay -->
         <div id="startScreen" class="menuOverlay visible"> <!-- Começa visível -->
-            <h1>Circle Shooter</h1> <!-- Título original ou novo -->
+            <h1>Circle Shooter</h1>
             <div id="startScreenButtons">
                 <button id="startBtn">Iniciar Jogo</button>
                 <button id="startShopBtn">Loja</button>
@@ -50,9 +51,6 @@
             </div>
             <button id="closeShopOverlayBtn">Voltar</button>
         </div>
-        <div id="waveIndicator">Wave: 0</div>
-        <div id="enemiesRemaining">Enemies: 0</div> <!-- ADD THIS LINE -->
-        <button id="pauseBtn" class="gameButton" style="display: none;">Pause</button>
     </div>
 
     <!-- Canvas do jogo -->
@@ -60,5 +58,11 @@
 
     <!-- Link to the external JavaScript file (placed at the end) -->
     <script src="script.js"></script>
+    <script src="setup.js"></script>
+    <script src="ui.js"></script>
+    <script src="gameobjects.js"></script>
+    <script src="updates.js"></script>
+    <script src="drawing.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>

@@ -6,12 +6,20 @@ function activateShield() {
      if (!player.shieldUnlocked || player.shieldState !== 'inactive') return;
      player.shieldState = 'active'; player.shieldTimer = now;
 }
+// --- Modified deployNanoBot ---
+// This function NOW ONLY creates the bot object. Cost check/deduction happens BEFORE calling this.
 function deployNanoBot() {
-    if (cash < NANO_BOT_DEPLOY_COST) { console.log("Not enough cash for nanobot."); return; }
-    cash -= NANO_BOT_DEPLOY_COST; updateCashDisplay(); saveGameData();
-    nanoBots.push({ x: player.x, y: player.y, target: null, state: 'seeking', creationTime: performance.now() });
-    console.log("Deployed Nanobot!");
+    // Cost check removed - assumed to be done by the caller (hotkey listener or UI button handler)
+    nanoBots.push({
+        x: player.x, y: player.y, // Start at player position
+        target: null, // Enemy object it's homing towards
+        state: 'seeking', // 'seeking', 'homing'
+        creationTime: performance.now()
+    });
+    console.log("Deployed Nanobot (object created).");
+    // Optional: Play deploy sound
 }
+
 
 // --- Bullet Creation ---
 function shootBullet() {
@@ -35,7 +43,7 @@ function shootBullet() {
     if (autoAimActive) {
         let closestDistSq = Infinity;
         enemies.forEach(enemy => {
-             if (!enemy.converted && !enemy.isBossMinion) {
+             if (enemy && !enemy.converted && !enemy.isBossMinion) { // Added null check for enemy
                 const distSq = distanceSquared(player.x, player.y, enemy.x, enemy.y);
                 if (distSq < closestDistSq) { closestDistSq = distSq; targetEnemy = enemy; }
             }
@@ -63,7 +71,7 @@ function shootConvertedBullet(sourceEnemy) {
 
     let targetEnemy = null; let closestDistSq = Infinity;
     enemies.forEach(enemy => {
-        if (!enemy.converted && enemy !== sourceEnemy && !enemy.isBossMinion) {
+        if (enemy && !enemy.converted && enemy !== sourceEnemy && !enemy.isBossMinion) { // Added null check
             const distSq = distanceSquared(sourceEnemy.x, sourceEnemy.y, enemy.x, enemy.y);
             if (distSq < closestDistSq) { closestDistSq = distSq; targetEnemy = enemy; }
         }
@@ -81,19 +89,17 @@ function shootConvertedBullet(sourceEnemy) {
 function spawnEnemy(isMinion = false, bossRef = null) {
     if (bossActive && !isMinion) return;
     let spawnX, spawnY; const buffer = 50;
+    const canvasW = canvas?.width || 600; const canvasH = canvas?.height || 400;
 
     if (isMinion && bossRef) {
-        const angle = Math.random() * Math.PI * 2;
-        const spawnDist = bossRef.radius + BASE_ENEMY_RADIUS + 10;
+        const angle = Math.random() * Math.PI * 2; const spawnDist = bossRef.radius + BASE_ENEMY_RADIUS + 10;
         spawnX = bossRef.x + Math.cos(angle) * spawnDist; spawnY = bossRef.y + Math.sin(angle) * spawnDist;
     } else {
         const edge = Math.floor(Math.random() * 4);
         switch (edge) {
-            case 0: spawnX = Math.random() * (canvas?.width || 600); spawnY = -buffer; break;
-            case 1: spawnX = (canvas?.width || 600) + buffer; spawnY = Math.random() * (canvas?.height || 400); break;
-            case 2: spawnX = Math.random() * (canvas?.width || 600); spawnY = (canvas?.height || 400) + buffer; break;
-            case 3: spawnX = -buffer; spawnY = Math.random() * (canvas?.height || 400); break;
-            default: spawnX = -buffer; spawnY = Math.random() * (canvas?.height || 400); // Fallback
+            case 0: spawnX = Math.random() * canvasW; spawnY = -buffer; break; case 1: spawnX = canvasW + buffer; spawnY = Math.random() * canvasH; break;
+            case 2: spawnX = Math.random() * canvasW; spawnY = canvasH + buffer; break; case 3: spawnX = -buffer; spawnY = Math.random() * canvasH; break;
+            default: spawnX = -buffer; spawnY = Math.random() * canvasH;
         }
     }
 
@@ -114,9 +120,8 @@ function spawnEnemy(isMinion = false, bossRef = null) {
 
     enemies.push({
         x: spawnX, y: spawnY, radius: BASE_ENEMY_RADIUS * radiusMultiplier, color: color, type: type,
-        maxHealth: finalHealth, health: finalHealth, speed: enemySpeed,
-        targetX: player.x, targetY: player.y, creationTime: performance.now(),
-        converted: false, infectionTimer: null, conversionEndTime: 0, lastConvertedShot: 0,
+        maxHealth: finalHealth, health: finalHealth, speed: enemySpeed, targetX: player.x, targetY: player.y,
+        creationTime: performance.now(), converted: false, infectionTimer: null, conversionEndTime: 0, lastConvertedShot: 0,
         isBossMinion: isMinion, isBoss: false, currentColor: color, wanderAngle: Math.random() * Math.PI * 2,
     });
 }
@@ -131,15 +136,12 @@ function spawnBoss() {
     switch (edge) {
         case 0: spawnX = canvasW / 2; spawnY = -buffer; break; case 1: spawnX = canvasW + buffer; spawnY = canvasH / 2; break;
         case 2: spawnX = canvasW / 2; spawnY = canvasH + buffer; break; case 3: spawnX = -buffer; spawnY = canvasH / 2; break;
-        default: spawnX = -buffer; spawnY = canvasH / 2; // Fallback
+        default: spawnX = -buffer; spawnY = canvasH / 2;
     }
-
     enemies.push({
-        x: spawnX, y: spawnY, radius: radius, color: BOSS_COLOR, type: 'boss',
-        maxHealth: health, health: health, speed: speed, targetX: player.x, targetY: player.y,
-        creationTime: performance.now(), isBoss: true, lastMinionSpawnTime: performance.now(),
-        converted: false, infectionTimer: null, conversionEndTime: 0, lastConvertedShot: 0,
-        isBossMinion: false, currentColor: BOSS_COLOR, wanderAngle: 0,
+        x: spawnX, y: spawnY, radius: radius, color: BOSS_COLOR, type: 'boss', maxHealth: health, health: health, speed: speed,
+        targetX: player.x, targetY: player.y, creationTime: performance.now(), isBoss: true, lastMinionSpawnTime: performance.now(),
+        converted: false, infectionTimer: null, conversionEndTime: 0, lastConvertedShot: 0, isBossMinion: false, currentColor: BOSS_COLOR, wanderAngle: 0,
     });
 }
 
@@ -150,10 +152,11 @@ function spawnPowerup(x, y) {
     else if (rand < AUTO_AIM_DROP_CHANCE + 0.04) { type = 'shieldBoost'; color = '#03A9F4'; symbol = 'S'; }
     else if (rand < AUTO_AIM_DROP_CHANCE + 0.09) { type = 'damageBoost'; color = '#FF5722'; symbol = 'D'; }
     else if (rand < AUTO_AIM_DROP_CHANCE + 0.15) { type = 'rapidFire'; color = '#9C27B0'; symbol = 'F'; }
-    else { type = 'cash'; color = '#FFEB3B'; symbol = '$'; } // Default cash
+    else { type = 'cash'; color = '#FFEB3B'; symbol = '$'; }
     powerups.push({ x: x, y: y, radius: 10, color: color, type: type, symbol: symbol, creationTime: performance.now() });
 }
 function activatePowerup(powerup) {
+    if (!powerup) return;
     const now = performance.now(); const duration = POWERUP_DURATION; const type = powerup.type;
     switch (type) {
         case 'cash': const amount = Math.floor(5 + currentWave * 1.5 + Math.random() * 5); cash += amount; updateCashDisplay(); saveGameData(); break;
@@ -162,7 +165,7 @@ function activatePowerup(powerup) {
         case 'damageBoost': player.activePowerups.damageBoost = now + duration; break;
         case 'autoAim': player.activePowerups.autoAim = now + duration; break;
     }
-    createParticles(player.x, player.y, powerup.color, 10);
+    createParticles(player.x, player.y, powerup.color || '#FFFFFF', 10);
 }
 
 // --- Enemy Conversion ---
@@ -177,14 +180,12 @@ function convertEnemy(enemy) {
 
 // --- Particle Creation ---
 function createParticles(x, y, color, count = PARTICLE_COUNT) {
-    if (!color) color = '#FFFFFF'; // Default color if none provided
+    if (!color) color = '#FFFFFF';
     for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * PARTICLE_SPEED + PARTICLE_SPEED * 0.5;
+        const angle = Math.random() * Math.PI * 2; const speed = Math.random() * PARTICLE_SPEED + PARTICLE_SPEED * 0.5;
         particles.push({
-            x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-            radius: Math.random() * PARTICLE_RADIUS + 1, color: color,
-            life: PARTICLE_LIFESPAN * (Math.random() * 0.5 + 0.75), creationTime: performance.now()
+            x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, radius: Math.random() * PARTICLE_RADIUS + 1,
+            color: color, life: PARTICLE_LIFESPAN * (Math.random() * 0.5 + 0.75), creationTime: performance.now()
         });
     }
 }

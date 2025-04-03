@@ -15,9 +15,12 @@ function updatePlayer(dt) {
 
     // Powerup Timers Check
     for (const type in player.activePowerups) {
-        if (player.activePowerups[type] < now) {
-            delete player.activePowerups[type];
-            console.log(`Powerup ${type} expired.`);
+        // Use hasOwnProperty to ensure it's not from the prototype chain
+        if (Object.prototype.hasOwnProperty.call(player.activePowerups, type)) {
+             if (player.activePowerups[type] < now) {
+                delete player.activePowerups[type];
+                console.log(`Powerup ${type} expired.`);
+            }
         }
     }
 
@@ -30,20 +33,24 @@ function updatePlayer(dt) {
 function updateBullets(dt) {
     const now = performance.now();
     const buffer = 20; // Off-screen buffer
+    const canvasW = canvas?.width || 600;
+    const canvasH = canvas?.height || 400;
 
     // --- Player Bullets ---
     for (let i = bullets.length - 1; i >= 0; i--) {
         const bullet = bullets[i];
+        if (!bullet) continue; // Safety check
         bullet.x += bullet.vx * dt; bullet.y += bullet.vy * dt;
 
-        if (bullet.x < -buffer || bullet.x > (canvas?.width || 600) + buffer || bullet.y < -buffer || bullet.y > (canvas?.height || 400) + buffer) {
+        if (bullet.x < -buffer || bullet.x > canvasW + buffer || bullet.y < -buffer || bullet.y > canvasH + buffer) {
             bullets.splice(i, 1); continue;
         }
 
         // Bullet-Enemy Collision
+        let bulletHit = false; // Flag to stop checking enemies after a hit
         for (let j = enemies.length - 1; j >= 0; j--) {
             const enemy = enemies[j];
-            if (enemy.converted) continue; // Ignore converted enemies
+            if (!enemy || enemy.converted) continue;
 
             const distSq = distanceSquared(bullet.x, bullet.y, enemy.x, enemy.y);
             const radiiSumSq = (bullet.radius + enemy.radius) * (bullet.radius + enemy.radius);
@@ -52,6 +59,7 @@ function updateBullets(dt) {
                 enemy.health -= bullet.damage;
                 createParticles(bullet.x, bullet.y, enemy.color, 3);
                 bullets.splice(i, 1); // Remove bullet
+                bulletHit = true; // Mark bullet as hit
 
                 if (enemy.health <= 0) { // Enemy defeated
                     let cashGain = 5 + Math.floor(currentWave * 0.5);
@@ -69,23 +77,24 @@ function updateBullets(dt) {
                 break; // Bullet hit one enemy, exit inner loop
             }
         } // End enemy loop
-         // Check again if bullet still exists (it might have been removed by hitting an enemy)
-         if (!bullets[i]) break; // Exit enemy loop if bullet is gone
+        if (bulletHit) continue; // Go to next bullet if this one hit
     } // End player bullet loop
 
      // --- Converted Enemy Bullets ---
      for (let i = convertedBullets.length - 1; i >= 0; i--) {
         const cBullet = convertedBullets[i];
+        if (!cBullet) continue; // Safety check
         cBullet.x += cBullet.vx * dt; cBullet.y += cBullet.vy * dt;
 
-        if (cBullet.x < -buffer || cBullet.x > (canvas?.width || 600) + buffer || cBullet.y < -buffer || cBullet.y > (canvas?.height || 400) + buffer) {
+        if (cBullet.x < -buffer || cBullet.x > canvasW + buffer || cBullet.y < -buffer || cBullet.y > canvasH + buffer) {
             convertedBullets.splice(i, 1); continue;
         }
 
          // Converted Bullet vs Non-Converted Enemy Collision
+         let cBulletHit = false;
          for (let j = enemies.length - 1; j >= 0; j--) {
              const enemy = enemies[j];
-             if (enemy.converted || enemy.isBossMinion) continue; // Ignore converted/minions
+             if (!enemy || enemy.converted || enemy.isBossMinion) continue; // Ignore converted/minions
 
              const distSq = distanceSquared(cBullet.x, cBullet.y, enemy.x, enemy.y);
              const radiiSumSq = (cBullet.radius + enemy.radius) * (cBullet.radius + enemy.radius);
@@ -94,6 +103,7 @@ function updateBullets(dt) {
                  enemy.health -= cBullet.damage;
                  createParticles(cBullet.x, cBullet.y, CONVERTED_BULLET_COLOR, 3);
                  convertedBullets.splice(i, 1); // Remove bullet
+                 cBulletHit = true;
 
                  if (enemy.health <= 0) { // Enemy defeated by converted
                     let cashGain = 2 + Math.floor(currentWave * 0.2);
@@ -111,8 +121,7 @@ function updateBullets(dt) {
                  break; // Bullet hit one enemy
              }
          } // End enemy loop
-          // Check again if bullet still exists
-          if (!convertedBullets[i]) break;
+         if (cBulletHit) continue; // Go to next converted bullet if this one hit
      } // End converted bullet loop
 }
 
@@ -124,7 +133,7 @@ function updateEnemies(dt) {
 
     for (let i = enemies.length - 1; i >= 0; i--) {
         const enemy = enemies[i];
-        if (!enemy) continue; // Skip if enemy became undefined somehow
+        if (!enemy) continue;
         let enemyRemovedThisFrame = false;
 
         // --- Boss Logic ---
@@ -310,7 +319,7 @@ function updateWaveState(dt) {
         }
         // Check wave completion
         if (enemiesRemainingInWave <= 0 && (enemiesSpawnedThisWave >= enemiesToSpawnThisWave)) {
-             if (!bossActive || (bossActive && enemies.every(e => !e.isBoss))) { // Ensure boss is actually gone if bossActive was true
+             if (!bossActive || (bossActive && enemies.every(e => e && !e.isBoss))) { // Ensure boss is actually gone
                  console.log(`Wave ${currentWave} complete.`);
                  startNextWave();
              }

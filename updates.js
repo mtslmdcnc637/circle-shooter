@@ -15,11 +15,10 @@ function updatePlayer(dt) {
 
     // Powerup Timers Check
     for (const type in player.activePowerups) {
-        // Use hasOwnProperty to ensure it's not from the prototype chain
         if (Object.prototype.hasOwnProperty.call(player.activePowerups, type)) {
              if (player.activePowerups[type] < now) {
                 delete player.activePowerups[type];
-                console.log(`Powerup ${type} expired.`);
+                // console.log(`Powerup ${type} expired.`); // Optional log
             }
         }
     }
@@ -32,22 +31,24 @@ function updatePlayer(dt) {
 
 function updateBullets(dt) {
     const now = performance.now();
-    const buffer = 20; // Off-screen buffer
+    // Increased buffer slightly for bullet removal
+    const buffer = 30; // Pixels beyond edge before removing
     const canvasW = canvas?.width || 600;
     const canvasH = canvas?.height || 400;
 
     // --- Player Bullets ---
     for (let i = bullets.length - 1; i >= 0; i--) {
         const bullet = bullets[i];
-        if (!bullet) continue; // Safety check
+        if (!bullet) continue;
         bullet.x += bullet.vx * dt; bullet.y += bullet.vy * dt;
 
+        // Off-screen check with increased buffer
         if (bullet.x < -buffer || bullet.x > canvasW + buffer || bullet.y < -buffer || bullet.y > canvasH + buffer) {
             bullets.splice(i, 1); continue;
         }
 
         // Bullet-Enemy Collision
-        let bulletHit = false; // Flag to stop checking enemies after a hit
+        let bulletHit = false;
         for (let j = enemies.length - 1; j >= 0; j--) {
             const enemy = enemies[j];
             if (!enemy || enemy.converted) continue;
@@ -58,8 +59,8 @@ function updateBullets(dt) {
             if (distSq < radiiSumSq) {
                 enemy.health -= bullet.damage;
                 createParticles(bullet.x, bullet.y, enemy.color, 3);
-                bullets.splice(i, 1); // Remove bullet
-                bulletHit = true; // Mark bullet as hit
+                bullets.splice(i, 1);
+                bulletHit = true;
 
                 if (enemy.health <= 0) { // Enemy defeated
                     let cashGain = 5 + Math.floor(currentWave * 0.5);
@@ -68,33 +69,33 @@ function updateBullets(dt) {
                     createParticles(enemy.x, enemy.y, enemy.color, 15);
                     if (!enemy.isBossMinion && Math.random() < POWERUP_DROP_CHANCE) spawnPowerup(enemy.x, enemy.y);
 
-                    enemies.splice(j, 1); // Remove enemy
-                    enemiesRemainingInWave--; // Decrement counter
+                    enemies.splice(j, 1);
+                    enemiesRemainingInWave--;
 
                     if (enemy.isBoss) { bossActive = false; console.log("BOSS DEFEATED!"); waveTimer = 1500; gameState = 'waveIntermission'; }
                     updateCashDisplay(); updateEnemiesRemainingUI(); saveGameData();
                 }
-                break; // Bullet hit one enemy, exit inner loop
+                break; // Bullet hit one enemy
             }
-        } // End enemy loop
-        if (bulletHit) continue; // Go to next bullet if this one hit
+        }
+        if (bulletHit) continue; // Go to next bullet
     } // End player bullet loop
 
      // --- Converted Enemy Bullets ---
      for (let i = convertedBullets.length - 1; i >= 0; i--) {
         const cBullet = convertedBullets[i];
-        if (!cBullet) continue; // Safety check
+        if (!cBullet) continue;
         cBullet.x += cBullet.vx * dt; cBullet.y += cBullet.vy * dt;
 
+        // Off-screen check with increased buffer
         if (cBullet.x < -buffer || cBullet.x > canvasW + buffer || cBullet.y < -buffer || cBullet.y > canvasH + buffer) {
             convertedBullets.splice(i, 1); continue;
         }
 
-         // Converted Bullet vs Non-Converted Enemy Collision
          let cBulletHit = false;
          for (let j = enemies.length - 1; j >= 0; j--) {
              const enemy = enemies[j];
-             if (!enemy || enemy.converted || enemy.isBossMinion) continue; // Ignore converted/minions
+             if (!enemy || enemy.converted || enemy.isBossMinion) continue;
 
              const distSq = distanceSquared(cBullet.x, cBullet.y, enemy.x, enemy.y);
              const radiiSumSq = (cBullet.radius + enemy.radius) * (cBullet.radius + enemy.radius);
@@ -102,7 +103,7 @@ function updateBullets(dt) {
              if (distSq < radiiSumSq) {
                  enemy.health -= cBullet.damage;
                  createParticles(cBullet.x, cBullet.y, CONVERTED_BULLET_COLOR, 3);
-                 convertedBullets.splice(i, 1); // Remove bullet
+                 convertedBullets.splice(i, 1);
                  cBulletHit = true;
 
                  if (enemy.health <= 0) { // Enemy defeated by converted
@@ -112,16 +113,16 @@ function updateBullets(dt) {
                     createParticles(enemy.x, enemy.y, enemy.color, 10);
                     if (!enemy.isBossMinion && Math.random() < POWERUP_DROP_CHANCE * 0.3) spawnPowerup(enemy.x, enemy.y);
 
-                    enemies.splice(j, 1); // Remove enemy
-                    enemiesRemainingInWave--; // Decrement counter
+                    enemies.splice(j, 1);
+                    enemiesRemainingInWave--;
 
                     if (enemy.isBoss) { bossActive = false; console.log("BOSS DEFEATED (by converted)!"); waveTimer = 1500; gameState = 'waveIntermission'; }
                     updateCashDisplay(); updateEnemiesRemainingUI(); saveGameData();
                  }
                  break; // Bullet hit one enemy
              }
-         } // End enemy loop
-         if (cBulletHit) continue; // Go to next converted bullet if this one hit
+         }
+         if (cBulletHit) continue; // Go to next converted bullet
      } // End converted bullet loop
 }
 
@@ -185,7 +186,7 @@ function updateEnemies(dt) {
             const BORDER_BUFFER = enemy.radius + 100;
             if (enemy.x < -BORDER_BUFFER || enemy.x > canvasW + BORDER_BUFFER || enemy.y < -BORDER_BUFFER || enemy.y > canvasH + BORDER_BUFFER) {
                 if (!enemy.isBoss) {
-                    console.log("Removing stray enemy:", enemy.type);
+                    // console.log("Removing stray enemy:", enemy.type); // Reduce console spam
                     enemies.splice(i, 1);
                     if (!enemy.converted) enemiesRemainingInWave--; // Only count if not converted
                     updateEnemiesRemainingUI();
@@ -236,32 +237,46 @@ function updateNanoBots(dt) {
     } // End bot loop
 }
 
+// --- Modified updatePowerups ---
 function updatePowerups(dt) {
     const now = performance.now();
     for (let i = powerups.length - 1; i >= 0; i--) {
         const p = powerups[i];
         if (!p) continue;
 
-        // Attraction
+        // --- Attraction Logic ---
         const distSqToPlayer = distanceSquared(p.x, p.y, player.x, player.y);
         const attractionDistSq = POWERUP_ATTRACTION_START_DISTANCE * POWERUP_ATTRACTION_START_DISTANCE;
+        let currentAttractionSpeed = POWERUP_ATTRACTION_SPEED * 0.3; // Base attraction speed (slower)
+
+        // Increase speed significantly if player is close
         if (distSqToPlayer < attractionDistSq) {
-            const angle = Math.atan2(player.y - p.y, player.x - p.x);
-            p.x += Math.cos(angle) * POWERUP_ATTRACTION_SPEED * dt; p.y += Math.sin(angle) * POWERUP_ATTRACTION_SPEED * dt;
+            currentAttractionSpeed = POWERUP_ATTRACTION_SPEED * 1.5; // Faster when close
         }
 
-        // Pickup
-        const collectionDistSq = (player.radius + p.radius) * (player.radius + p.radius);
-        if (distSqToPlayer < collectionDistSq) {
-            activatePowerup(p); powerups.splice(i, 1); continue;
+        // Always move towards player
+        const angle = Math.atan2(player.y - p.y, player.x - p.x);
+        p.x += Math.cos(angle) * currentAttractionSpeed * dt;
+        p.y += Math.sin(angle) * currentAttractionSpeed * dt;
+        // --- End Attraction Logic ---
+
+
+        // Pickup Check (use distance squared for efficiency)
+        const collectionDist = player.radius + p.radius;
+        if (distSqToPlayer < collectionDist * collectionDist) {
+            activatePowerup(p);
+            powerups.splice(i, 1); // Remove powerup from game
+            continue; // Skip despawn check for this removed powerup
         }
 
-        // Despawn
-        if (now - p.creationTime > 15000) {
-            createParticles(p.x, p.y, p.color || '#FFFFFF', 5); powerups.splice(i, 1);
+        // Despawn after time
+        if (now - p.creationTime > 15000) { // 15 seconds lifespan
+            createParticles(p.x, p.y, p.color || '#FFFFFF', 5); // Fade out effect
+            powerups.splice(i, 1);
         }
     }
 }
+
 
 function updateParticles(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -296,8 +311,8 @@ function startNextWave() {
         enemiesRemainingInWave = enemiesToSpawnThisWave; enemiesSpawnedThisWave = 0;
         currentEnemySpawnInterval = Math.max(MIN_ENEMY_SPAWN_INTERVAL, BASE_ENEMY_SPAWN_INTERVAL - ((currentWave -1) * SPAWN_INTERVAL_REDUCTION_PER_WAVE));
         lastEnemySpawnTime = 0;
-        if (currentWave > 1) { let bonus = 20 + currentWave * 5; cash += bonus; updateCashDisplay(); console.log(`Wave ${currentWave-1} clear! +${bonus} cash.`); }
-        console.log(`Wave ${currentWave}: Spawning ${enemiesToSpawnThisWave}. Interval: ${currentEnemySpawnInterval.toFixed(0)}ms`);
+        if (currentWave > 1) { let bonus = 20 + currentWave * 5; cash += bonus; updateCashDisplay(); /* console.log(`Wave ${currentWave-1} clear! +${bonus} cash.`); */ } // Reduce log spam
+        // console.log(`Wave ${currentWave}: Spawning ${enemiesToSpawnThisWave}. Interval: ${currentEnemySpawnInterval.toFixed(0)}ms`); // Reduce log spam
     }
     updateWaveDisplay(); updateEnemiesRemainingUI(); saveGameData();
 }
@@ -306,7 +321,7 @@ function updateWaveState(dt) {
     const now = performance.now();
     if (gameState === 'waveIntermission') {
         waveTimer -= dt * 1000;
-        if (waveTimer <= 0) { gameState = 'playing'; lastEnemySpawnTime = now; console.log("Intermission ended."); }
+        if (waveTimer <= 0) { gameState = 'playing'; lastEnemySpawnTime = now; /* console.log("Intermission ended."); */ } // Reduce log spam
         return; // No spawning/completion checks during intermission
     }
 
@@ -320,7 +335,7 @@ function updateWaveState(dt) {
         // Check wave completion
         if (enemiesRemainingInWave <= 0 && (enemiesSpawnedThisWave >= enemiesToSpawnThisWave)) {
              if (!bossActive || (bossActive && enemies.every(e => e && !e.isBoss))) { // Ensure boss is actually gone
-                 console.log(`Wave ${currentWave} complete.`);
+                 // console.log(`Wave ${currentWave} complete.`); // Reduce log spam
                  startNextWave();
              }
         }

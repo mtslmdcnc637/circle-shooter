@@ -13,6 +13,7 @@ function applyScreenShake() {
     }
 }
 
+// --- Modified drawPlayer ---
 function drawPlayer() {
     if (!ctx) return;
     const now = performance.now();
@@ -29,17 +30,41 @@ function drawPlayer() {
     // --- Player Circle ---
     ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fill();
 
-    // --- Shield Visual ---
+    // --- Draw Shield Visual ---
     if (player.shieldState === 'active') {
-        const shieldPercent = Math.max(0, 1 - ((now - player.shieldTimer) / calculateShieldDuration()));
-        ctx.beginPath(); ctx.arc(player.x, player.y, player.radius + 5, 0, Math.PI * 2);
-        ctx.strokeStyle = lerpColor('#64B5F6', SHIELD_COLOR, shieldPercent); ctx.lineWidth = 2 + shieldPercent * 3;
-        ctx.globalAlpha = 0.4 + shieldPercent * 0.5; ctx.stroke(); ctx.globalAlpha = 1.0;
+        // *** ADDED DEBUG LOG HERE ***
+        console.log(`Drawing shield: Active. Time: ${now}, Start Timer: ${player.shieldTimer}`);
+        const shieldDuration = calculateShieldDuration();
+        const timeElapsed = now - player.shieldTimer;
+        const shieldPercent = Math.max(0, 1 - (timeElapsed / shieldDuration)); // 1 down to 0
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius + 5, 0, Math.PI * 2);
+        // Fade color from bright yellow to white/blue as it depletes?
+        ctx.strokeStyle = lerpColor('#64B5F6', SHIELD_COLOR, shieldPercent); // Blue to Yellow fade
+        ctx.lineWidth = 2 + shieldPercent * 3; // Thickness pulses down
+        // Alpha fades out slightly as well
+        ctx.globalAlpha = 0.4 + shieldPercent * 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0; // Reset global alpha
     } else if (player.shieldState === 'cooldown') {
-         const cooldownPercent = Math.min(1, (now - player.shieldTimer) / calculateShieldCooldown());
-         ctx.beginPath(); ctx.arc(player.x, player.y, player.radius + 4, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * cooldownPercent));
-         ctx.strokeStyle = '#AAAAAA60'; ctx.lineWidth = 2; ctx.stroke();
+         // *** ADDED DEBUG LOG HERE (Optional but good) ***
+         // console.log(`Drawing shield: Cooldown. Time: ${now}, Start Timer: ${player.shieldTimer}`);
+         const cooldownDuration = calculateShieldCooldown();
+         const timeElapsed = now - player.shieldTimer;
+         const cooldownPercent = Math.min(1, timeElapsed / cooldownDuration); // 0 up to 1
+         // Draw a subtle cooldown progress arc
+         ctx.beginPath();
+         // Start at top (-PI/2), draw clockwise
+         ctx.arc(player.x, player.y, player.radius + 4, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * cooldownPercent));
+         ctx.strokeStyle = '#AAAAAA60'; // Faint grey cooldown indicator
+         ctx.lineWidth = 2;
+         ctx.stroke();
+    } else {
+         // *** ADDED DEBUG LOG HERE ***
+         // Only log occasionally if needed to avoid spam
+         // if (Math.random() < 0.01) console.log(`Drawing shield: Inactive.`);
     }
+
 
     // --- Aiming Reticle ---
     const dxAim = aimX - player.x; const dyAim = aimY - player.y; const distAim = Math.sqrt(dxAim*dxAim + dyAim*dyAim);

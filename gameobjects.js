@@ -1,13 +1,29 @@
 // --- Player Actions ---
 function calculateShieldDuration() { return BASE_SHIELD_ACTIVE_DURATION + player.shieldDurationLevel * SHIELD_DURATION_INCREASE; }
 function calculateShieldCooldown() { return Math.max(MIN_SHIELD_COOLDOWN, BASE_SHIELD_COOLDOWN_DURATION - player.shieldCooldownLevel * SHIELD_COOLDOWN_DECREASE); }
+
+// --- Modified activateShield ---
 function activateShield() {
+     console.log("Attempting to activate shield..."); // DEBUG LOG
      const now = performance.now();
-     if (!player.shieldUnlocked || player.shieldState !== 'inactive') return;
-     player.shieldState = 'active'; player.shieldTimer = now;
+     // Check if shield is unlocked and currently inactive (ready)
+     if (!player.shieldUnlocked) {
+         console.log("Shield activate failed: Not unlocked."); // DEBUG LOG
+         return;
+     }
+     if (player.shieldState !== 'inactive') {
+          console.log(`Shield activate failed: Current state is ${player.shieldState}.`); // DEBUG LOG
+          return; // Only activate if ready (not active or on cooldown)
+     }
+
+     // Shield is ready, activate it
+     player.shieldState = 'active';
+     player.shieldTimer = now; // Record the time activation started
+     console.log("Shield ACTIVATED!"); // DEBUG LOG
+     // Visual indication handled in drawPlayer
+     // Optional: Play shield activation sound
 }
-// --- Modified deployNanoBot ---
-// This function NOW ONLY creates the bot object. Cost check/deduction happens BEFORE calling this.
+
 function deployNanoBot() {
     // Cost check removed - assumed to be done by the caller (hotkey listener or UI button handler)
     nanoBots.push({
@@ -161,7 +177,7 @@ function activatePowerup(powerup) {
     switch (type) {
         case 'cash': const amount = Math.floor(5 + currentWave * 1.5 + Math.random() * 5); cash += amount; updateCashDisplay(); saveGameData(); break;
         case 'rapidFire': player.activePowerups.rapidFire = now + duration; break;
-        case 'shieldBoost': if (player.shieldUnlocked) { player.shieldState = 'active'; player.shieldTimer = now; } break;
+        case 'shieldBoost': if (player.shieldUnlocked) { player.shieldState = 'active'; player.shieldTimer = now; console.log("Shield activated by Powerup"); } break; // Log powerup activation
         case 'damageBoost': player.activePowerups.damageBoost = now + duration; break;
         case 'autoAim': player.activePowerups.autoAim = now + duration; break;
     }
@@ -171,7 +187,7 @@ function activatePowerup(powerup) {
 // --- Enemy Conversion ---
 function convertEnemy(enemy) {
     if (!enemy || enemy.converted || enemy.isBoss || enemy.isBossMinion) return;
-    console.log("Converting enemy:", enemy.type);
+    // console.log("Converting enemy:", enemy.type); // Reduce log spam
     enemy.converted = true; enemy.infectionTimer = null; enemy.conversionEndTime = performance.now() + CONVERTED_DURATION;
     enemy.color = CONVERTED_BULLET_COLOR; enemy.currentColor = CONVERTED_BULLET_COLOR;
     enemy.radius *= CONVERTED_ENEMY_RADIUS_FACTOR; enemy.speed *= 0.4; enemy.lastConvertedShot = performance.now();

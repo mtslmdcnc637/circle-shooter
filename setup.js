@@ -100,7 +100,7 @@ const player = {
 };
 
 // --- Upgrade Definitions ---
-// Added 'nanobot' entry. It's not level-based in the traditional sense.
+// Added a console log to ensure this array is defined correctly
 const upgrades = [
     { id: 'shield', name: 'Unlock Shield', description: 'Deploy temporary shield (Space/S).', cost: SHIELD_UNLOCK_COST, levelKey: null, isPurchased: () => player.shieldUnlocked, action: () => { if (!player.shieldUnlocked) { player.shieldUnlocked = true; updateUpgradeUI(); updateShopOverlayUI(); saveGameData(); } } },
     { id: 'weaponLevel', name: 'Weapon Level', description: 'Increases bullets per shot.', cost: WEAPON_LEVEL_COST, levelKey: 'weaponLevel', maxLevel: MAX_WEAPON_LEVEL, action: (level) => { player.weaponLevel = level; } },
@@ -109,11 +109,9 @@ const upgrades = [
     { id: 'bulletSpeed', name: 'Bullet Speed Up', description: `Increase bullet speed by ${BULLET_SPEED_INCREASE * 100}%.`, cost: BULLET_SPEED_COST, levelKey: 'bulletSpeedLevel', maxLevel: 10, action: (level) => { player.bulletSpeedLevel = level; } },
     { id: 'shieldDuration', name: 'Shield Duration', description: `Increase shield active time by ${SHIELD_DURATION_INCREASE / 1000}s.`, cost: SHIELD_DURATION_COST, levelKey: 'shieldDurationLevel', maxLevel: 5, requiresShield: true, action: (level) => { player.shieldDurationLevel = level; } },
     { id: 'shieldCooldown', name: 'Shield Cooldown', description: `Decrease shield cooldown by ${SHIELD_COOLDOWN_DECREASE / 1000}s.`, cost: SHIELD_COOLDOWN_COST, levelKey: 'shieldCooldownLevel', maxLevel: 8, requiresShield: true, action: (level) => { player.shieldCooldownLevel = level; } },
-    // --- Added Nanobot Purchase Option ---
-    { id: 'nanobot', name: 'Deploy Nanobot', description: `Launch a bot to convert an enemy (${NANO_BOT_DEPLOY_COST} Cash). Hotkey: B`, cost: NANO_BOT_DEPLOY_COST, levelKey: null, isPurchasable: true, // Special flag? Or just check cost
-      action: () => buyNanoBotUpgrade() // Action calls a wrapper
-    }
+    { id: 'nanobot', name: 'Deploy Nanobot', description: `Launch a bot to convert an enemy (${NANO_BOT_DEPLOY_COST} Cash). Hotkey: B`, cost: NANO_BOT_DEPLOY_COST, levelKey: null, isPurchasable: true, action: () => buyNanoBotUpgrade() }
 ];
+console.log("Upgrades array defined:", upgrades); // DEBUG LOG
 
 // --- Funções Utilitárias ---
 function degToRad(degrees) { return degrees * Math.PI / 180; }
@@ -137,7 +135,7 @@ function loadGameData() {
         cash = parseInt(localStorage.getItem(STORAGE_KEY_CASH) || '0');
         player.shieldUnlocked = localStorage.getItem(STORAGE_KEY_SHIELD_UNLOCKED) === 'true';
         player.weaponLevel = parseInt(localStorage.getItem(STORAGE_KEY_WEAPON_LEVEL) || '0');
-        player.damageLevel = parseInt(localStorage.getItem(STORAGE_KEY_DAMAGE_LEVEL) || '0');
+        player.damageLevel = parseInt(localStorage.getItem(STORAGE_KEY_DAMAGE_LEVEL) || '0'); // Load level
         player.fireRateLevel = parseInt(localStorage.getItem(STORAGE_KEY_FIRE_RATE_LEVEL) || '0');
         player.bulletSpeedLevel = parseInt(localStorage.getItem(STORAGE_KEY_BULLET_SPEED_LEVEL) || '0');
         player.shieldDurationLevel = parseInt(localStorage.getItem(STORAGE_KEY_SHIELD_DURATION_LEVEL) || '0');
@@ -151,7 +149,7 @@ function saveGameData() {
         localStorage.setItem(STORAGE_KEY_CASH, cash.toString());
         localStorage.setItem(STORAGE_KEY_SHIELD_UNLOCKED, player.shieldUnlocked.toString());
         localStorage.setItem(STORAGE_KEY_WEAPON_LEVEL, player.weaponLevel.toString());
-        localStorage.setItem(STORAGE_KEY_DAMAGE_LEVEL, player.damageLevel.toString());
+        localStorage.setItem(STORAGE_KEY_DAMAGE_LEVEL, player.damageLevel.toString()); // Save level
         localStorage.setItem(STORAGE_KEY_FIRE_RATE_LEVEL, player.fireRateLevel.toString());
         localStorage.setItem(STORAGE_KEY_BULLET_SPEED_LEVEL, player.bulletSpeedLevel.toString());
         localStorage.setItem(STORAGE_KEY_SHIELD_DURATION_LEVEL, player.shieldDurationLevel.toString());
@@ -159,16 +157,29 @@ function saveGameData() {
     } catch (e) { console.error("Error saving game data:", e); }
 }
 
-// --- Configuração Inicial Canvas ---
+// --- Configuração Inicial Canvas --- (Resize logic reverted)
 function resizeCanvas() {
-    const aspectRatio = 16 / 9;
-    let w = window.innerWidth - 20; let h = window.innerHeight - 20;
-    if (w / h > aspectRatio) { w = h * aspectRatio; } else { h = w / aspectRatio; }
-    const maxWidth = 1400; const maxHeight = 787;
-    w = Math.min(w, maxWidth); h = Math.min(h, maxHeight);
-    if (canvas) { canvas.width = Math.floor(w); canvas.height = Math.floor(h); }
-    if (gameState === 'start' || gameState === 'gameOver' || !player.x || !player.y) {
-        player.x = canvas?.width / 2 || 300; player.y = canvas?.height / 2 || 200;
+    const maxWidth = 1400; // Keep a max width
+    const maxHeight = 900; // Keep a max height
+
+    // Use available window size minus some padding
+    const width = Math.min(window.innerWidth - 10, maxWidth);
+    const height = Math.min(window.innerHeight - 10, maxHeight);
+
+    if (canvas) { // Check if canvas exists
+        canvas.width = width;
+        canvas.height = height;
+        console.log(`Canvas resized to: ${width}x${height}`); // Debug log
+    } else {
+        console.error("Canvas element not found during resize!");
     }
-    aimX = canvas?.width / 2 || 300; aimY = canvas?.height / 2 || 200;
+
+    // Recenter player only if necessary (start, game over, or first load)
+    if (gameState === 'start' || gameState === 'gameOver' || !player.x || !player.y) {
+        player.x = canvas?.width / 2 || 300; // Use canvas size or fallback
+        player.y = canvas?.height / 2 || 200;
+    }
+    // Reset aim to center after resize
+    aimX = canvas?.width / 2 || 300;
+    aimY = canvas?.height / 2 || 200;
 }

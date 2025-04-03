@@ -3,21 +3,17 @@ function calculateShieldDuration() { return BASE_SHIELD_ACTIVE_DURATION + player
 function calculateShieldCooldown() { return Math.max(MIN_SHIELD_COOLDOWN, BASE_SHIELD_COOLDOWN_DURATION - player.shieldCooldownLevel * SHIELD_COOLDOWN_DECREASE); }
 
 function activateShield() {
-     // console.log("Attempting to activate shield..."); // Reduce log spam
      const now = performance.now();
-     if (!player.shieldUnlocked || player.shieldState !== 'inactive') {
-         // console.log(`Shield activate failed: Unlocked=${player.shieldUnlocked}, State=${player.shieldState}.`);
-         return;
-     }
+     if (!player.shieldUnlocked || player.shieldState !== 'inactive') return;
      player.shieldState = 'active'; player.shieldTimer = now;
      // console.log("Shield ACTIVATED!"); // Reduce log spam
-     // Logic for shield explosion on activation (if purchased) could go here, or on expiry in updatePlayer
 }
 
 function deployNanoBot() {
     nanoBots.push({ x: player.x, y: player.y, target: null, state: 'seeking', creationTime: performance.now() });
     // console.log("Deployed Nanobot (object created)."); // Reduce log spam
 }
+
 
 // --- Bullet Creation ---
 function shootBullet() { // Player shooting
@@ -34,7 +30,7 @@ function shootBullet() { // Player shooting
     const damagePowerupMult = player.activePowerups.damageBoost ? 2 : 1;
     const bulletDamage = BASE_BULLET_DAMAGE * player.damageMultiplier * damagePowerupMult;
     const finalBulletRadius = BULLET_RADIUS;
-    const hitsLeft = player.bulletPierceUnlocked ? BULLET_PIERCE_MAX + 1 : 1; // 1 hit base, +1 if pierced
+    const hitsLeft = player.bulletPierceUnlocked ? BULLET_PIERCE_MAX + 1 : 1; // 1 hit base, + pierce bonus
 
     let angle; let targetEnemy = null;
     const autoAimActive = player.activePowerups.autoAim && player.activePowerups.autoAim > now;
@@ -58,8 +54,7 @@ function shootBullet() { // Player shooting
     for (let i = 0; i < shots; i++) {
         let shotAngle = angle;
         if (shots > 1) shotAngle = angle - spreadAngle / 2 + (i / (shots - 1)) * spreadAngle;
-        const vx = Math.cos(shotAngle) * bulletSpeed;
-        const vy = Math.sin(shotAngle) * bulletSpeed;
+        const vx = Math.cos(shotAngle) * bulletSpeed; const vy = Math.sin(shotAngle) * bulletSpeed;
         bullets.push({
              x: player.x, y: player.y, vx: vx, vy: vy, radius: finalBulletRadius,
              color: BULLET_COLOR, damage: bulletDamage, creationTime: now,
@@ -91,26 +86,24 @@ function shootEnemyBullet(enemy) { // Enemy shooting logic
 
     enemy.lastShotTime = now;
     const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x); // Aim at player
-    const vx = Math.cos(angle) * ENEMY_BULLET_SPEED;
-    const vy = Math.sin(angle) * ENEMY_BULLET_SPEED;
+    const vx = Math.cos(angle) * ENEMY_BULLET_SPEED; const vy = Math.sin(angle) * ENEMY_BULLET_SPEED;
 
     enemyBullets.push({
-        x: enemy.x, y: enemy.y,
-        vx: vx, vy: vy,
+        x: enemy.x, y: enemy.y, vx: vx, vy: vy,
         radius: ENEMY_BULLET_RADIUS, color: ENEMY_BULLET_COLOR, damage: ENEMY_BULLET_DAMAGE,
         creationTime: now
     });
 }
 
-// --- Enemy Creation --- (Modified to include new types)
+// --- Enemy Creation ---
 function spawnEnemy(isMinion = false, bossRef = null, forceType = null, position = null, healthFactor = 1) {
+    // console.log(`Spawning enemy: minion=${isMinion}, type=${forceType}`); // DEBUG LOG
     if (bossActive && !isMinion) return;
     let spawnX, spawnY; const buffer = 50;
     const canvasW = canvas?.width || 600; const canvasH = canvas?.height || 400;
 
-    if (position) { // Used by splitter children
-        spawnX = position.x; spawnY = position.y;
-    } else if (isMinion && bossRef) {
+    if (position) { spawnX = position.x; spawnY = position.y; }
+    else if (isMinion && bossRef) {
         const angle = Math.random() * Math.PI * 2; const spawnDist = bossRef.radius + BASE_ENEMY_RADIUS + 10;
         spawnX = bossRef.x + Math.cos(angle) * spawnDist; spawnY = bossRef.y + Math.sin(angle) * spawnDist;
     } else {
@@ -125,18 +118,17 @@ function spawnEnemy(isMinion = false, bossRef = null, forceType = null, position
     let type, color, healthMultiplier = 1, speedMultiplier = 1, radiusMultiplier = 1;
     const waveFactor = Math.pow(1.05, currentWave); const speedWaveFactor = Math.pow(1.01, currentWave);
 
-    if (forceType) { type = forceType; } // For splitter children
+    if (forceType) { type = forceType; }
     else if (isMinion) { type = 'square'; }
     else { // Regular enemy type selection
         const typeRoll = Math.random();
         if (currentWave > 8 && typeRoll > 0.85) type = 'splitter';
         else if (currentWave > 5 && typeRoll > 0.65) type = 'shooter';
-        else if (currentWave > 10 && typeRoll > 0.5) type = 'triangle'; // Made triangles slightly rarer/later
+        else if (currentWave > 10 && typeRoll > 0.5) type = 'triangle';
         else if (currentWave > 2 && typeRoll > 0.2) type = 'square';
         else type = 'circle';
     }
 
-    // Assign properties based on type
     switch (type) {
         case 'shooter': color = ENEMY_SHOOTER_COLOR; healthMultiplier = 0.9 * waveFactor; speedMultiplier = 0.7 * speedWaveFactor; radiusMultiplier = 1.0; break;
         case 'splitter': color = ENEMY_SPLITTER_COLOR; healthMultiplier = 1.2 * waveFactor; speedMultiplier = 0.8 * speedWaveFactor; radiusMultiplier = 1.1; break;
@@ -148,18 +140,15 @@ function spawnEnemy(isMinion = false, bossRef = null, forceType = null, position
         type = 'square'; color = ENEMY_SQUARE_COLOR; healthMultiplier = 0.6 * waveFactor; speedMultiplier = 1.3 * speedWaveFactor; radiusMultiplier = 0.8;
      }
 
-
     const speedVariance = (Math.random() - 0.5) * 2 * ENEMY_SPEED_RANDOMNESS;
     const enemySpeed = Math.max(25, (BASE_ENEMY_SPEED + speedVariance) * speedMultiplier);
-    // Apply health factor for splitter children
     const finalHealth = Math.max(10, BASE_ENEMY_HEALTH * healthMultiplier * healthFactor);
 
     enemies.push({
         x: spawnX, y: spawnY, radius: BASE_ENEMY_RADIUS * radiusMultiplier, color: color, type: type,
         maxHealth: finalHealth, health: finalHealth, speed: enemySpeed, targetX: player.x, targetY: player.y,
         creationTime: performance.now(), converted: false, infectionTimer: null, conversionEndTime: 0, lastConvertedShot: 0,
-        lastShotTime: 0, // For shooter enemies
-        isBossMinion: isMinion, isBoss: false, currentColor: color, wanderAngle: Math.random() * Math.PI * 2,
+        lastShotTime: 0, isBossMinion: isMinion, isBoss: false, currentColor: color, wanderAngle: Math.random() * Math.PI * 2,
     });
 }
 function spawnBoss() {
@@ -183,17 +172,16 @@ function spawnBoss() {
     });
 }
 
-// --- Powerup Creation & Activation --- (Added Health Pack, Magnet)
+// --- Powerup Creation & Activation ---
 function spawnPowerup(x, y) {
     const rand = Math.random(); let type = 'cash'; let color = '#FFEB3B'; let symbol = '$';
-    // Order by rarity
     if (rand < AUTO_AIM_DROP_CHANCE) { type = 'autoAim'; color = AUTO_AIM_POWERUP_COLOR; symbol = '@'; }
-    else if (rand < AUTO_AIM_DROP_CHANCE + 0.04) { type = 'magnet'; color = POWERUP_MAGNET_COLOR; symbol = 'M'; } // Magnet
-    else if (rand < AUTO_AIM_DROP_CHANCE + 0.09) { type = 'health'; color = POWERUP_HEALTH_COLOR; symbol = '+'; } // Health Pack
+    else if (rand < AUTO_AIM_DROP_CHANCE + 0.04) { type = 'magnet'; color = POWERUP_MAGNET_COLOR; symbol = 'M'; }
+    else if (rand < AUTO_AIM_DROP_CHANCE + 0.09) { type = 'health'; color = POWERUP_HEALTH_COLOR; symbol = '+'; }
     else if (rand < AUTO_AIM_DROP_CHANCE + 0.13) { type = 'shieldBoost'; color = '#03A9F4'; symbol = 'S'; }
     else if (rand < AUTO_AIM_DROP_CHANCE + 0.18) { type = 'damageBoost'; color = '#FF5722'; symbol = 'D'; }
     else if (rand < AUTO_AIM_DROP_CHANCE + 0.25) { type = 'rapidFire'; color = '#9C27B0'; symbol = 'F'; }
-    else { type = 'cash'; color = '#FFEB3B'; symbol = '$'; } // Default cash
+    else { type = 'cash'; color = '#FFEB3B'; symbol = '$'; }
     powerups.push({ x: x, y: y, radius: 10, color: color, type: type, symbol: symbol, creationTime: performance.now() });
 }
 function activatePowerup(powerup) {
@@ -205,8 +193,8 @@ function activatePowerup(powerup) {
         case 'shieldBoost': if (player.shieldUnlocked) { player.shieldState = 'active'; player.shieldTimer = now; /* console.log("Shield activated by Powerup"); */ } break;
         case 'damageBoost': player.activePowerups.damageBoost = now + duration; break;
         case 'autoAim': player.activePowerups.autoAim = now + duration; break;
-        case 'health': health = Math.min(100, health + HEALTH_PACK_AMOUNT); updateHealthDisplay(); break; // Heal player, cap at 100
-        case 'magnet': player.activePowerups.magnet = now + MAGNET_DURATION; break; // Activate magnet timer
+        case 'health': health = Math.min(100, health + HEALTH_PACK_AMOUNT); updateHealthDisplay(); break;
+        case 'magnet': player.activePowerups.magnet = now + MAGNET_DURATION; break;
     }
     createParticles(player.x, player.y, powerup.color || '#FFFFFF', 10);
 }
@@ -234,11 +222,10 @@ function createParticles(x, y, color, count = PARTICLE_COUNT) {
 
 // --- Damage Number Creation ---
 function createDamageNumber(x, y, amount) {
+    if (amount <= 0) return; // Don't show 0 damage
     damageNumbers.push({
-        x: x + (Math.random() - 0.5) * 10, // Slight horizontal jitter
-        y: y,
-        text: Math.round(amount).toString(),
-        life: DAMAGE_NUMBER_LIFESPAN,
+        x: x + (Math.random() - 0.5) * 10, y: y,
+        text: Math.round(amount).toString(), life: DAMAGE_NUMBER_LIFESPAN,
         creationTime: performance.now()
     });
 }

@@ -11,10 +11,7 @@ function updateEnemiesRemainingUI() {
     if (!enemiesRemainingElement) return;
     if (gameState === 'playing' || gameState === 'waveIntermission') {
         let text = bossActive ? "BOSS" : `Enemies: ${enemiesRemainingInWave}`;
-        // Add nanobot count display (simple version)
-        if (nanoBots.length > 0) {
-             text += ` | Bots: ${nanoBots.length}`;
-        }
+        if (nanoBots.length > 0) { text += ` | Bots: ${nanoBots.length}`; } // Show active bots
         enemiesRemainingElement.textContent = text;
         enemiesRemainingElement.style.display = 'block';
     } else {
@@ -59,17 +56,13 @@ function gameOver() {
 function restartGame() {
     if (!gameOverElement || !startScreen) return;
     gameOverElement.classList.remove('visible'); startScreen.classList.add('visible');
-    // Reset all game state variables
     health = 100; currentWave = 0; bossActive = false;
     enemies = []; bullets = []; particles = []; powerups = []; nanoBots = []; convertedBullets = []; enemyBullets = []; damageNumbers = [];
     player.activePowerups = {}; player.shieldActive = false; player.shieldState = 'inactive'; player.shieldTimer = 0; player.lastBulletTime = 0;
-    // Reset player levels loaded from storage potentially? No, keep persistent upgrades.
     enemiesRemainingInWave = 0; enemiesToSpawnThisWave = 0; enemiesSpawnedThisWave = 0;
     waveTimer = 0; waveClearMessageTimer = 0; lastEnemySpawnTime = 0; currentEnemySpawnInterval = BASE_ENEMY_SPAWN_INTERVAL;
     shakeIntensity = 0; shakeDuration = 0; shakeOffsetX = 0; shakeOffsetY = 0;
-
-    loadGameData(); // Reload persistent cash/upgrades
-    resizeCanvas();
+    loadGameData(); resizeCanvas();
     updateHealthDisplay(); updateWaveDisplay(); updateEnemiesRemainingUI(); updateCashDisplay();
     gameState = 'start';
 }
@@ -101,7 +94,7 @@ function updateShopOverlayUI() { // Excludes consumable nanobot purchase
     shopCashOverlayElement.textContent = `Cash: ${cash}`;
     shopItemsContainerOverlay.innerHTML = '';
     upgrades.forEach((upgrade) => {
-        if (upgrade.id === 'nanobot') return; // Skip consumable
+        if (!upgrade || upgrade.id === 'nanobot') return; // Skip consumable and null check
         if (upgrade.requiresShield && !player.shieldUnlocked) return;
         const itemDiv = createShopOverlayItem(upgrade);
         if (itemDiv) shopItemsContainerOverlay.appendChild(itemDiv);
@@ -109,49 +102,36 @@ function updateShopOverlayUI() { // Excludes consumable nanobot purchase
 }
 
 // --- Upgrade Creation & Purchase Logic ---
-function calculateUpgradeCost(baseCost, level) { return Math.floor(baseCost * Math.pow(1.35, level)); } // Slightly increased cost scaling
+function calculateUpgradeCost(baseCost, level) { return Math.floor(baseCost * Math.pow(1.35, level)); }
 
 function getUpgradeLevel(upgrade) {
     if (!upgrade?.levelKey) return 0;
     return player[upgrade.levelKey] || 0;
 }
 
-function createUpgradeItem(upgrade, index) { // For In-Game Panel
+function createUpgradeItem(upgrade, actualIndex) { // Pass actual index for button data
     if (!upgrade) return null;
     const upgradeDiv = document.createElement('div');
     upgradeDiv.classList.add('upgradeItem');
 
     const isNanobotPurchase = upgrade.id === 'nanobot';
-    const isUnlockable = !upgrade.levelKey && upgrade.isPurchased; // Like shield, pierce, explode
+    const isUnlockable = !upgrade.levelKey && typeof upgrade.isPurchased === 'function';
 
-    let currentLevel = 0;
-    let isMaxed = false;
-    let isPurchased = false;
-    let finalCost = upgrade.cost; // Base cost
+    let currentLevel = 0; let isMaxed = false; let isPurchased = false; let finalCost = upgrade.cost;
 
-    if (isNanobotPurchase) {
-         // Handled below
-    } else if (isUnlockable) {
-        isPurchased = upgrade.isPurchased();
-        isMaxed = isPurchased; // Unlockables are maxed once purchased
-        finalCost = isPurchased ? 0 : upgrade.cost;
-    } else if (upgrade.levelKey) { // Leveled upgrade
-        currentLevel = getUpgradeLevel(upgrade);
-        isMaxed = upgrade.maxLevel !== undefined && currentLevel >= upgrade.maxLevel;
-        finalCost = isMaxed ? 0 : calculateUpgradeCost(upgrade.cost, currentLevel);
-    }
+    if (isNanobotPurchase) { /* Cost is fixed */ }
+    else if (isUnlockable) { isPurchased = upgrade.isPurchased(); isMaxed = isPurchased; finalCost = isPurchased ? 0 : upgrade.cost; }
+    else if (upgrade.levelKey) { currentLevel = getUpgradeLevel(upgrade); isMaxed = upgrade.maxLevel !== undefined && currentLevel >= upgrade.maxLevel; finalCost = isMaxed ? 0 : calculateUpgradeCost(upgrade.cost, currentLevel); }
 
     const canAfford = cash >= finalCost;
     let levelDisplay = "";
-    if (!isNanobotPurchase && !isUnlockable && upgrade.levelKey) { // Only show level for actual leveled upgrades
-        levelDisplay = isMaxed ? ` (Max)` : ` (Lvl ${currentLevel})`;
-    }
+    if (!isNanobotPurchase && !isUnlockable && upgrade.levelKey) { levelDisplay = isMaxed ? ` (Max)` : ` (Lvl ${currentLevel})`; }
 
     let buttonText = 'Buy'; let buttonDisabled = false;
     if (isNanobotPurchase) { buttonText = 'Deploy'; buttonDisabled = !canAfford; }
     else if (isPurchased) { buttonText = 'Owned'; buttonDisabled = true; }
     else if (isMaxed) { buttonText = 'Maxed'; buttonDisabled = true; }
-    else if (!canAfford) { buttonDisabled = true; } // Can't afford buyable upgrade
+    else if (!canAfford) { buttonDisabled = true; }
 
     upgradeDiv.innerHTML = `
         <div class="info">
@@ -159,24 +139,24 @@ function createUpgradeItem(upgrade, index) { // For In-Game Panel
             ${(isPurchased || isMaxed) ? '' : `<span class="cost">Cost: ${finalCost}</span>`}
             <span class="details">${upgrade.description}</span>
         </div>
-        <button data-index="${index}" ${buttonDisabled ? 'disabled' : ''}>
+        <button data-index="${actualIndex}" ${buttonDisabled ? 'disabled' : ''}>
             ${buttonText}
-        </button>`;
-    if (isMaxed) upgradeDiv.classList.add('maxed'); // Includes purchased unlockables
+        </button>`; // Use actualIndex in data-index
+    if (isMaxed) upgradeDiv.classList.add('maxed');
     const button = upgradeDiv.querySelector('button');
     if (button && !buttonDisabled) {
         if (isNanobotPurchase) button.onclick = () => buyNanoBotUpgrade();
-        else button.onclick = () => buyUpgradeByIndex(index);
+        else button.onclick = () => buyUpgradeByIndex(actualIndex); // Use actualIndex
     } else if (button) button.onclick = null;
     return upgradeDiv;
 }
 
 function createShopOverlayItem(upgrade) { // For Shop Overlay
-    if (!upgrade || upgrade.id === 'nanobot') return null; // Exclude consumable
+    if (!upgrade || upgrade.id === 'nanobot') return null;
     const itemDiv = document.createElement('div');
     itemDiv.classList.add('shopItemOverlay');
 
-    const isUnlockable = !upgrade.levelKey && upgrade.isPurchased;
+    const isUnlockable = !upgrade.levelKey && typeof upgrade.isPurchased === 'function';
     let currentLevel = 0; let isMaxed = false; let isPurchased = false; let finalCost = upgrade.cost;
 
     if (isUnlockable) { isPurchased = upgrade.isPurchased(); isMaxed = isPurchased; finalCost = isPurchased ? 0 : upgrade.cost; }
@@ -208,11 +188,11 @@ function createShopOverlayItem(upgrade) { // For Shop Overlay
 }
 
 
-function updateUpgradeUI() { // Updates BOTH panels' content
+function updateUpgradeUI() { // Updates In-Game Panel content
     if (!upgradeItemsContainer) return;
     // console.log("Updating Upgrade Panel UI..."); // Reduce log spam
     upgradeItemsContainer.innerHTML = '';
-    let visibleIndexForHotkey = 0; // Index used for number hotkeys (ignores nanobot button)
+    // let visibleIndexForHotkey = 0; // Hotkey mapping done in main.js listener now
     upgrades.forEach((upg, actualIndex) => {
         // console.log("Processing upgrade for panel:", upg.id);
         if (upg.requiresShield && !player.shieldUnlocked) return;
@@ -221,45 +201,18 @@ function updateUpgradeUI() { // Updates BOTH panels' content
         const item = createUpgradeItem(upg, actualIndex);
         if(item) {
             upgradeItemsContainer.appendChild(item);
-            // Only increment the hotkey index for non-consumable items
-            // if (upg.id !== 'nanobot') {
-            //     visibleIndexForHotkey++; // This logic needs care if order changes
-            // }
         } else {
-            console.warn(`Failed to create upgrade item for ${upg.id}`);
+            // console.warn(`Failed to create upgrade item for ${upg.id}`); // Reduce log spam
         }
     });
     // console.log("Upgrade panel update complete.");
-    if (gameState === 'shoppingOverlay') updateShopOverlayUI();
+    // Note: Shop overlay update is separate now
 }
 
 
 function displayCannotAfford(upgradeId) {
-    // Find the button in the upgrade panel and flash it red briefly
-    let button = null;
+    // Simplified: Just log for now. Flashing UI can be complex.
     const upgrade = upgrades.find(u => u.id === upgradeId);
-    if (!upgrade) return;
-
-    // Find the corresponding element in the panel
-     const items = upgradeItemsContainer.querySelectorAll('.upgradeItem button');
-     items.forEach((btn, index) => {
-         // We need a reliable way to map button back to upgrade ID, data-index isn't ideal if list order changes
-         // Let's temporarily rely on the text content (fragile) or add data-id to panel items too
-         // For now, let's flash the cost element if possible
-         const upgradeItemDiv = btn.closest('.upgradeItem');
-         if (upgradeItemDiv) {
-             const nameSpan = upgradeItemDiv.querySelector('.name');
-             // Rough check - ideally use data-id if we add it
-             if (nameSpan && nameSpan.textContent.includes(upgrade.name)) {
-                 const costSpan = upgradeItemDiv.querySelector('.cost');
-                 if (costSpan) {
-                      costSpan.style.transition = 'color 0.1s ease-in-out';
-                      costSpan.style.color = '#F44336'; // Flash red
-                      setTimeout(() => { costSpan.style.color = '#FFEB3B'; }, 200); // Revert color
-                 }
-             }
-         }
-     });
     console.log(`Cannot afford "${upgrade?.name}".`);
 }
 
@@ -267,13 +220,13 @@ function displayCannotAfford(upgradeId) {
 function buyUpgrade(upgrade) {
     if (!upgrade || upgrade.id === 'nanobot') { console.warn("buyUpgrade: Invalid upgrade passed."); return; }
 
-    const isUnlockable = !upgrade.levelKey && upgrade.isPurchased;
+    const isUnlockable = !upgrade.levelKey && typeof upgrade.isPurchased === 'function';
     let currentLevel = 0; let isMaxed = false; let isPurchased = false; let finalCost = upgrade.cost;
 
     if (isUnlockable) { isPurchased = upgrade.isPurchased(); isMaxed = isPurchased; finalCost = isPurchased ? 0 : upgrade.cost; }
     else if (upgrade.levelKey) { currentLevel = getUpgradeLevel(upgrade); isMaxed = upgrade.maxLevel !== undefined && currentLevel >= upgrade.maxLevel; finalCost = isMaxed ? 0 : calculateUpgradeCost(upgrade.cost, currentLevel); }
 
-    if (isPurchased || isMaxed) { /* console.log(`Upgrade "${upgrade.name}" owned/maxed.`); */ return; } // Silent fail
+    if (isPurchased || isMaxed) { /* console.log(`Upgrade "${upgrade.name}" owned/maxed.`); */ return; }
     if (cash < finalCost) { displayCannotAfford(upgrade.id); return; }
 
     cash -= finalCost;
@@ -281,7 +234,7 @@ function buyUpgrade(upgrade) {
     if (upgrade.action) upgrade.action(nextLevel); // Call action, pass next level if applicable
     else console.warn(`Upgrade "${upgrade.name}" missing action.`);
 
-    console.log(`Bought: ${upgrade.name}, Lvl: ${upgrade.levelKey ? nextLevel : 'N/A'}, Cost: ${finalCost}, Cash: ${cash}`);
+    // console.log(`Bought: ${upgrade.name}, Lvl: ${upgrade.levelKey ? nextLevel : 'N/A'}, Cost: ${finalCost}, Cash: ${cash}`); // Reduce log spam
     updateCashDisplay(); updateUpgradeUI(); saveGameData();
 }
 
@@ -293,10 +246,10 @@ function buyNanoBotUpgrade() {
 }
 
 
-function buyUpgradeByIndex(actualIndex) { // Index is now the actual index in the 'upgrades' array
+function buyUpgradeByIndex(actualIndex) { // Index IS the actual index in the 'upgrades' array
      if (actualIndex >= 0 && actualIndex < upgrades.length) {
          const upgrade = upgrades[actualIndex];
-         if (upgrade.id === 'nanobot') { // If nanobot button somehow got here
+         if (upgrade.id === 'nanobot') { // If nanobot button somehow got here via index
              buyNanoBotUpgrade();
          } else {
              buyUpgrade(upgrade); // Use general buy function for others

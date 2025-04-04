@@ -1,29 +1,27 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Circle Shooter - Nanobots Update (Corrigido)</title>
-    <!-- Link to the external CSS file -->
+    <title>Circle Shooter - SVG Enemies</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Elementos da UI -->
     <div id="gameUI">
         <div id="cashDisplay">Cash: 0</div>
         <div id="health">Health: 100</div>
         <div id="waveIndicator">Wave: 0</div>
-        <div id="enemiesRemaining">Enemies: 0</div> <!-- Added for enemy count -->
+        <div id="enemiesRemaining">Enemies: 0</div>
         <button id="pauseBtn" class="gameButton" style="display: none;">Pause</button>
+        <button id="inGameShopBtn" class="gameButton" style="display: none; bottom: 20px; right: 100px;">Shop</button>
 
-        <!-- Painel de Upgrades In-Game (visível durante o jogo) -->
         <div id="upgradePanel" style="display: none;">
             <h3>Upgrades</h3>
             <div id="upgradeItemsContainer"></div>
         </div>
 
-        <!-- Menus Overlay -->
-        <div id="startScreen" class="menuOverlay visible"> <!-- Começa visível -->
+        <div id="startScreen" class="menuOverlay visible">
             <h1>Circle Shooter</h1>
             <div id="startScreenButtons">
                 <button id="startBtn">Iniciar Jogo</button>
@@ -42,25 +40,24 @@
             <button id="resumeBtn">Resume</button>
         </div>
 
-        <!-- Overlay da Loja (acessado da tela inicial) -->
-        <div id="shopOverlay" class="menuOverlay">
+        <div id="shopOverlay" class="menuOverlay"> <!-- Overlay usado por ambos os botões de loja -->
+            <button id="shopCloseButtonX" class="closeButton">X</button> <!-- NOVO BOTÃO X -->
             <h2>Loja de Upgrades</h2>
             <div id="shopCashOverlay">Cash: 0</div>
             <div id="shopItemsContainerOverlay">
-                <!-- Itens da loja overlay serão adicionados aqui -->
+                <!-- Itens da loja -->
             </div>
-            <button id="closeShopOverlayBtn">Voltar</button>
+            <button id="closeShopOverlayBtn">Voltar</button> <!-- Botão Voltar existente -->
         </div>
     </div>
 
-    <!-- Canvas do jogo -->
     <canvas id="gameCanvas"></canvas>
 
     <script src="setup.js"></script>
-    <script src="ui.js"></script>
     <script src="gameobjects.js"></script>
     <script src="updates.js"></script>
     <script src="drawing.js"></script>
+    <script src="ui.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

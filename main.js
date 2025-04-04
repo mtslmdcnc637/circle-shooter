@@ -1,126 +1,257 @@
+
+// Global state variable to track state before pause/shop
+let previousGameState = 'start';
+
 // --- Main Game Loop ---
-
 function update(dt) {
-    // Check for valid game states where updates should happen
-    const canUpdate = gameState === 'playing' || gameState === 'waveIntermission';
-    if (!canUpdate) return; // Skip updates if paused, game over, etc.
+    // Game logic updates only run if playing
+    if (gameState !== 'playing') return;
 
-    // Update game state first
+    // Update game state first (wave progression, etc.)
     if (typeof updateWaveState === 'function') updateWaveState(dt);
 
-    // Update objects only if playing (not intermission)
-    if (gameState === 'playing') {
-        if (typeof updatePlayer === 'function') updatePlayer(dt);
-        if (typeof updateEnemies === 'function') updateEnemies(dt);
-        if (typeof updateEnemyBullets === 'function') updateEnemyBullets(dt);
-        if (typeof updateNanoBots === 'function') updateNanoBots(dt);
-        if (typeof updateBullets === 'function') updateBullets(dt); // Player/Converted Bullets
-        if (typeof updatePowerups === 'function') updatePowerups(dt);
-    }
+    // Update game objects
+    if (typeof updatePlayer === 'function') updatePlayer(dt);
+    if (typeof updateEnemies === 'function') updateEnemies(dt);
+    if (typeof updateEnemyBullets === 'function') updateEnemyBullets(dt);
+    if (typeof updateNanoBots === 'function') updateNanoBots(dt);
+    if (typeof updateBullets === 'function') updateBullets(dt); // Player/Converted Bullets
+    if (typeof updatePowerups === 'function') updatePowerups(dt);
 
-    // Update effects (Particles, Shake, Damage Numbers) - can update even during intermission
+    // Update effects (Particles, Shake, Damage Numbers)
     if (typeof updateParticles === 'function') updateParticles(dt);
     if (typeof updateDamageNumbers === 'function') updateDamageNumbers(dt);
     if (typeof updateScreenShake === 'function') updateScreenShake(dt);
 
-    // Final check for game over
-    if (health <= 0 && gameState === 'playing') { // Check state again after updates
-        if (typeof gameOver === 'function') gameOver();
-    }
+    // Game over checks are now inside enemy/bullet updates that can cause health to drop to 0
 }
 
 
 function gameLoop(timestamp) {
-    // Request next frame immediately
-    animationFrameId = requestAnimationFrame(gameLoop);
-
-    // Calculate deltaTime
+    // Calculate deltaTime - essential for smooth, frame-rate independent movement
     if (!lastFrameTime) lastFrameTime = timestamp;
-    deltaTime = (timestamp - lastFrameTime) / 1000;
+    deltaTime = (timestamp - lastFrameTime) / 1000; // deltaTime in seconds
     lastFrameTime = timestamp;
-    deltaTime = Math.min(deltaTime, 0.1); // Clamp dt
+    // Clamp deltaTime to prevent physics explosions if frame rate drops significantly
+    deltaTime = Math.min(deltaTime, 0.1); // Max 100ms update step
 
-    // --- Update Game State (only if not paused) ---
-    if (gameState !== 'paused') {
-        update(deltaTime);
-    }
+    // --- Update Game State ---
+    // Update only runs if gameState is 'playing' (checked inside update function)
+    update(deltaTime);
 
-    // --- Draw Frame (always draw, even if paused to show menus/paused state) ---
+    // --- Draw Frame ---
+    // Drawing should happen regardless of gameState to show menus, pause screen, etc.
     if (typeof draw === 'function') {
-        draw();
+        draw(); // Call the main drawing function in drawing.js
     } else {
-        console.error("Draw function is not defined!"); // Should not happen
+        console.error("Draw function is not defined!");
     }
 
+    // Request the next frame if the game isn't permanently stopped
+    if (gameState !== 'gameOver') {
+         // Ensure previous frame ID is cleared before requesting a new one
+         // (Might not be strictly necessary with modern browsers, but good practice)
+         if (animationFrameId) { animationFrameId = null; }
+         animationFrameId = requestAnimationFrame(gameLoop);
+    } else {
+         // Ensure loop stops cleanly on game over
+         if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+         }
+    }
 }
 
 // --- Initialization and Event Listeners ---
 function init() {
-    console.log("Initializing Game v3...");
+    console.log("[init] Initializing Game v3...");
+    // <<< GARANTIR ESTADO INICIAL CORRETO ANTES DE QUALQUER COISA >>>
+    gameState = 'start';
+    previousGameState = 'start';
+    console.log(`[init] Initial gameState set to: ${gameState}`);
 
+    // Critical check for canvas
     if (!canvas || !ctx) {
-        console.error("Canvas or Context not found! Game cannot start.");
+        console.error("[init] Canvas or Context not found! Game cannot start.");
         document.body.innerHTML = '<h1 style="color: red; text-align: center;">Error: Could not initialize Canvas.</h1>';
-        return;
+        return; // Stop initialization
     }
 
-    resizeCanvas(); loadGameData();
+    // Initial setup calls
+    resizeCanvas(); // Set initial canvas size
+    loadGameData(); // Load saved progress (cash, upgrades)
 
-    // Setup Event Listeners
+    // --- Setup Event Listeners ---
+    console.log("[init] Setting up event listeners...");
+
+    // Botões da Tela Inicial
     if (startBtn) startBtn.addEventListener('click', startGame); else console.warn("Start button not found");
-    if (startShopBtn) startShopBtn.addEventListener('click', openShopOverlay); else console.warn("Start Shop button not found");
-    if (closeShopOverlayBtn) closeShopOverlayBtn.addEventListener('click', closeShopOverlay); else console.warn("Close Shop button not found");
+    if (startShopBtn) startShopBtn.addEventListener('click', openShopOverlay); else console.warn("Start Shop button (start screen) not found");
+
+    // Botão "Voltar" da Loja (listener inicial para a loja da tela inicial)
+    if (closeShopOverlayBtn) {
+        closeShopOverlayBtn.onclick = closeShopOverlay; // Correct initial assignment
+    } else { console.warn("Close Shop 'Voltar' button not found"); }
+
+    // Botão 'X' da Loja (NOVO)
+    if (shopCloseButtonX) {
+        shopCloseButtonX.addEventListener('click', () => {
+            console.log(`[shopCloseButtonX clicked] Current state: ${gameState}`);
+            // Determine which close function to call based on current state
+            if (gameState === 'shoppingOverlay') {
+                closeShopOverlay();
+            } else if (gameState === 'inGameShop') {
+                closeInGameShop();
+            } else {
+                 console.warn(`[shopCloseButtonX clicked] Clicked in unexpected state: ${gameState}`);
+                 // Optional: Force close any potentially visible overlay?
+                 if(shopOverlay) shopOverlay.classList.remove('visible');
+                 if(pauseMenu) pauseMenu.classList.remove('visible');
+                 // Avoid changing state if unsure
+            }
+        });
+    } else { console.warn("Shop 'X' Close button not found"); }
+
+    // Clique Fora da Loja (NOVO)
+    if (shopOverlay) {
+        shopOverlay.addEventListener('click', (event) => {
+            // Check if the click was directly on the overlay background
+            if (event.target === shopOverlay) {
+                console.log(`[shopOverlay background clicked] Current state: ${gameState}`);
+                 if (gameState === 'shoppingOverlay') {
+                    closeShopOverlay();
+                } else if (gameState === 'inGameShop') {
+                    closeInGameShop();
+                } else {
+                    console.warn(`[shopOverlay background clicked] Clicked in unexpected state: ${gameState}`);
+                }
+            }
+        });
+    } else { console.warn("Shop overlay element not found for background click listener."); }
+
+    // Botão de Restart (Game Over)
     if (restartBtn) restartBtn.addEventListener('click', restartGame); else console.warn("Restart button not found");
+
+    // Botões In-Game
     if (pauseBtn) pauseBtn.addEventListener('click', togglePause); else console.warn("Pause button not found");
     if (resumeBtn) resumeBtn.addEventListener('click', togglePause); else console.warn("Resume button not found");
+    if (inGameShopBtn) {
+        inGameShopBtn.onclick = openInGameShop; // Set initial listener
+    } else { console.warn("In-Game Shop button not found"); }
 
+    // Canvas Input Listeners (Using Pointer Events)
     if (canvas) {
-        canvas.addEventListener('mousemove', (e) => { if (gameState === 'playing') updateAimPosition(e); });
-        canvas.addEventListener('mousedown', (e) => { if (gameState === 'playing') updateAimPosition(e); });
-        canvas.addEventListener('touchmove', (e) => { if (gameState === 'playing') { e.preventDefault(); updateAimPosition(e); } }, { passive: false });
-        canvas.addEventListener('touchstart', (e) => { if (gameState === 'playing') { e.preventDefault(); updateAimPosition(e); } }, { passive: false });
-    } else { console.error("Canvas element not found for input listeners."); }
+        canvas.addEventListener('pointermove', (e) => {
+            if (gameState === 'playing') {
+                e.preventDefault();
+                updateAimPosition(e);
+            }
+        });
+        canvas.addEventListener('pointerdown', (e) => {
+            if (gameState === 'playing') {
+                e.preventDefault();
+                updateAimPosition(e);
+                shootBullet(); // Shoot on down press
+            }
+        });
+        // Prevent context menu on long press/right click
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    } else { console.error("[init] Canvas element not found for input listeners."); }
 
+    // Keyboard Listeners
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' || e.key.toLowerCase() === 'p') {
+        const key = e.key.toLowerCase(); // Normalize key to lowercase
+
+        // Escape Key Logic
+        if (key === 'escape') {
             e.preventDefault();
-            if (gameState === 'shoppingOverlay') closeShopOverlay();
-            else if (gameState === 'playing' || gameState === 'paused') togglePause();
+            console.log(`[keydown:Escape] Current state: ${gameState}`);
+            if (gameState === 'inGameShop') { closeInGameShop(); }
+            else if (gameState === 'shoppingOverlay') { closeShopOverlay(); }
+            else if (gameState === 'playing' || gameState === 'paused') { togglePause(); }
         }
+
+        // P Key for Pause (alternative)
+        if (key === 'p') {
+             if (gameState === 'playing' || gameState === 'paused') {
+                 e.preventDefault();
+                 togglePause();
+             }
+        }
+
+        // --- Hotkeys during 'playing' state ---
         if (gameState === 'playing') {
-            if (e.key >= '1' && e.key <= '9') { // Hotkeys 1-9
-                 let targetVisibleIndex = parseInt(e.key) - 1;
+            // Upgrade Hotkeys (1-9 for visible items in the panel)
+            if (e.key >= '1' && e.key <= '9') {
+                 e.preventDefault();
+                 let targetVisibleIndex = parseInt(e.key) - 1; // 0-based index
                  let currentVisibleIndex = 0;
                  let actualUpgradeIndex = -1;
-                 for(let i=0; i<upgrades.length; i++){
-                     if (!upgrades[i]) continue; // Safety check
-                     if (upgrades[i].id === 'nanobot') continue;
-                     if (upgrades[i].requiresShield && !player.shieldUnlocked) continue;
-                     if(currentVisibleIndex === targetVisibleIndex){ actualUpgradeIndex = i; break; }
-                     currentVisibleIndex++;
-                 }
-                  if(actualUpgradeIndex !== -1) { buyUpgradeByIndex(actualUpgradeIndex); }
-             }
-            if (e.key.toLowerCase() === 'b') { // Nanobot hotkey
-                 if (cash >= NANO_BOT_DEPLOY_COST) { cash -= NANO_BOT_DEPLOY_COST; updateCashDisplay(); saveGameData(); deployNanoBot(); updateUpgradeUI(); }
-                 else { displayCannotAfford('nanobot'); }
-            }
-            if (e.key === ' ' || e.key.toLowerCase() === 's') { activateShield(); } // Shield hotkey
-        }
-    });
 
-    // Initial UI Updates and State
+                 // Iterate through upgrades, considering visibility rules
+                 for(let i=0; i<upgrades.length; i++){
+                     const upg = upgrades[i];
+                     if (!upg) continue; // Safety check
+                     // Skip upgrades hidden due to requirements
+                     if (upg.requiresShield && !player.shieldUnlocked) continue;
+
+                     // If this visible upgrade matches the target index, store its actual array index
+                     if(currentVisibleIndex === targetVisibleIndex){
+                         actualUpgradeIndex = i;
+                         break;
+                     }
+                     currentVisibleIndex++; // Increment visible index only for items that would show
+                 }
+
+                  // If a valid upgrade was found, attempt purchase
+                  if(actualUpgradeIndex !== -1) {
+                      console.log(`Hotkey ${e.key} pressed, attempting purchase for upgrade index ${actualUpgradeIndex}`);
+                      buyUpgradeByIndex(actualUpgradeIndex);
+                  } else {
+                      console.log(`Hotkey ${e.key} pressed, but no corresponding visible upgrade found.`);
+                  }
+             }
+
+            // Nanobot Deploy Hotkey (B)
+            if (key === 'b') {
+                 e.preventDefault();
+                 deployNanoBot(); // Handles cost check internally
+            }
+
+            // Shield Activation Hotkey (Space or S)
+            if (e.key === ' ' || key === 's') {
+                e.preventDefault();
+                activateShield();
+            }
+        } // End 'playing' state hotkeys
+    });
+    console.log("[init] Event listeners set.");
+
+    // Initial UI Updates and State Setup
+    console.log("[init] Updating initial UI states...");
     updateCashDisplay(); updateHealthDisplay(); updateWaveDisplay(); updateEnemiesRemainingUI();
+
+    // <<< GARANTIR QUE APENAS A TELA INICIAL ESTÁ VISÍVEL >>>
     if(startScreen) startScreen.classList.add('visible'); else console.warn("Start screen not found");
     if(gameOverElement) gameOverElement.classList.remove('visible'); else console.warn("Game Over element not found");
     if(pauseMenu) pauseMenu.classList.remove('visible'); else console.warn("Pause menu not found");
-    if(shopOverlay) shopOverlay.classList.remove('visible'); else console.warn("Shop overlay not found");
-    if(pauseBtn) pauseBtn.style.display = 'none';
-    hideUpgradePanel();
+    if(shopOverlay) {
+        // Double-check removal of visibility
+        shopOverlay.classList.remove('visible');
+        console.log("[init] Shop overlay visibility explicitly removed.");
+    } else { console.warn("Shop overlay not found"); }
 
-    console.log("Initialization Complete. Ready.");
-    // Don't start the game loop here, wait for Start button
+    // Hide in-game buttons initially
+    if(pauseBtn) pauseBtn.style.display = 'none';
+    if(inGameShopBtn) inGameShopBtn.style.display = 'none';
+
+    hideUpgradePanel(); // Ensure upgrade panel is hidden
+    console.log("[init] Initial UI update complete.");
+
+    console.log(`[init] Final gameState before exiting init: ${gameState}`); // Should be 'start'
+    console.log("[init] Initialization Complete. Ready.");
+    // Game loop does NOT start here. It starts when 'startGame' is called.
 }
 
-// --- Start the Game Initialization ---
+// --- Start the Game Initialization on DOM Load ---
 document.addEventListener('DOMContentLoaded', init);

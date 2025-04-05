@@ -4,602 +4,728 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// --- Estado Global do Jogo ---
-let gameData = {
-    // Player related
-    player: null,
-    projectiles: [],
-    // Enemy related
-    enemies: [],
-    enemySpawnTimer: 0,
-    enemySpawnInterval: 1500, // ms
-    // Wave related
-    wave: 0,
-    enemiesThisWave: 0,
-    enemiesSpawnedThisWave: 0,
-    enemiesDefeatedThisWave: 0,
-    waveDelayTimer: 0,
-    waveDelayDuration: 3000, // ms between waves
-    // Game state
-    cash: 1000,
-    health: 100,
-    baseHealth: 100,
-    paused: false,
-    running: false,
-    gameOver: false,
-    // Timing
-    lastTime: 0,
-    deltaTime: 0,
-    // Input
-    mousePos: { x: 0, y: 0 },
-    // isShooting: false, // Não é mais usado para disparar
-    shootCooldownTimer: 0, // Usado para controlar o tiro automático
-    // Efeitos
-    particles: [],
-    damageNumbers: [],
-    // Upgrades / Shop
-    availableUpgrades: [],
-    shopItems: [],
-    // Configurações
-    config: {
-        playerRadius: 20,
-        playerColor: '#00BFFF',
-        playerShootRate: 5, // Este valor não é mais usado diretamente para delay, veja calculateFireRateDelay
-        projectileSpeed: 750, // Aumentado
-        projectileRadius: 5,
-        projectileColor: '#FFFFFF',
-        projectileDamage: 10, // Dano base
-        enemyBaseSpeed: 30, // Velocidade base inimigo (pixels/segundo)
-        enemyBaseHealth: 10,
-        enemyBaseRadius: 25,
-        enemyValue: 5,
-        enemyDamage: 10,
-        waveStartEnemyCount: 5,
-        waveEnemyIncrement: 3,
-    }
-};
+// --- Estado Global do Jogo (agora usando variáveis globais para simplificar acesso) ---
+let player = null;
+let bullets = []; // Balas do jogador
+let convertedBullets = []; // Balas de inimigos convertidos
+let enemyBullets = []; // Balas de inimigos normais
+let enemies = [];
+let nanoBots = []; // Nanobots ativos
+let powerups = [];
+let particles = [];
+let damageNumbers = [];
+
+let cash = 0;
+let health = 100;
+let baseHealth = 100; // Para upgrades de vida máxima
+let currentWave = 0;
+let enemiesToSpawnThisWave = 0;
+let enemiesSpawnedThisWave = 0;
+// let enemiesDefeatedThisWave = 0; // Substituído por enemiesRemainingInWave
+let enemiesRemainingInWave = 0; // Contagem mais precisa
+
+let gameState = 'loading'; // 'loading', 'start', 'waveIntermission', 'playing', 'paused', 'gameOver', 'shopOverlay'
+let waveTimer = 0; // Usado para intermission
+let lastEnemySpawnTime = 0;
+let currentEnemySpawnInterval = BASE_ENEMY_SPAWN_INTERVAL; // Valor inicial
+let bossActive = false; // Flag para indicar se um boss está na tela
+
+let lastTime = 0;
+let deltaTime = 0;
+let mousePos = { x: 0, y: 0 };
+let animationFrameId = null; // Para controlar o loop
 
 // --- Funções de Controle do Jogo ---
 
 function initializeGame() {
     console.log("Initializing Game...");
-    resizeCanvas();
+    gameState = 'loading'; // Estado inicial
+    cancelAnimationFrame(animationFrameId); // Garante que loop anterior pare
+    animationFrameId = null;
 
+    resizeCanvas(); // Ajusta tamanho antes de posicionar
+
+    // Cria jogador usando a classe
     if (typeof Player !== 'undefined') {
-        gameData.player = new Player(canvas.width / 2, canvas.height / 2, gameData.config.playerRadius, gameData.config.playerColor);
+        player = new Player(canvas.width / 2, canvas.height / 2, PLAYER_RADIUS, PLAYER_COLOR);
     } else {
         console.error("Classe Player não definida!");
-        gameData.player = { x: canvas.width / 2, y: canvas.height / 2, radius: gameData.config.playerRadius, shootRate: 5, projectileDamage: 1, projectileSpeed: 500, projectileRadius: 5, projectileColor: '#FFF' }; // Placeholder
+        return; // Não continuar sem Player
     }
-    gameData.projectiles = [];
-    gameData.enemies = [];
-    gameData.particles = [];
-    gameData.damageNumbers = [];
-    gameData.enemySpawnTimer = 0;
-    gameData.wave = 0;
-    gameData.enemiesThisWave = 0;
-    gameData.enemiesSpawnedThisWave = 0;
-    gameData.enemiesDefeatedThisWave = 0;
-    gameData.waveDelayTimer = gameData.waveDelayDuration;
-    gameData.cash = 1000;
-    gameData.baseHealth = 100;
-    gameData.health = gameData.baseHealth;
-    gameData.paused = false;
-    gameData.running = false;
-    gameData.gameOver = false;
-    gameData.lastTime = performance.now();
-    // gameData.isShooting = false; // Removido
-    gameData.shootCooldownTimer = 0; // Inicia pronto para atirar
 
-    initializeUpgradesAndShop();
-    initializeUI();
+    // Zera arrays de estado
+    bullets = [];
+    convertedBullets = [];
+    enemyBullets = [];
+    enemies = [];
+    nanoBots = [];
+    powerups = [];
+    particles = [];
+    damageNumbers = [];
+
+    // Reseta variáveis de jogo
+    cash = 1000; // Cash inicial
+    baseHealth = 100;
+    health = baseHealth;
+    currentWave = 0;
+    enemiesToSpawnThisWave = 0;
+    enemiesSpawnedThisWave = 0;
+    enemiesRemainingInWave = 0;
+    waveTimer = WAVE_INTERMISSION_TIME; // Inicia com tempo para primeira wave
+    lastEnemySpawnTime = 0;
+    bossActive = false;
+    gameState = 'start'; // Pronto para ir para a tela inicial
+    lastTime = performance.now();
+    mousePos = { x: canvas.width / 2, y: canvas.height / 2 }; // Mira no centro
+
+    // Zera estado do jogador (exceto upgrades persistentes se houver)
+    player.shieldState = 'inactive';
+    player.shieldTimer = 0;
+    player.lastBulletTime = 0;
+    player.activePowerups = {};
+    player.currentAimAngle = -Math.PI / 2; // Mira para cima inicialmente
+
+    // Zera/Reseta Upgrades (se não forem persistentes)
+    initializeUpgrades();
+
+    // Inicializa UI e Listeners
+    // Chama as funções da UI através do window para garantir o escopo
+    if (typeof window.initializeUI === 'function') {
+        window.initializeUI(); // Mostra start screen, atualiza displays
+    } else {
+        console.error("initializeUI function not found!");
+    }
     setupEventListeners();
 
-    console.log("Game Initialized. Waiting for start.");
+    console.log("Game Initialized. State: 'start'");
 }
 
 function startGame() {
-    if (gameData.running) return;
-    console.log("Starting Game...");
-     if (!gameData.player) {
-        console.error("Cannot start game without player!");
-        initializeGame();
-        if(!gameData.player) return;
+    // Verifica se o jogo já está rodando ou se está na tela inicial
+    if (gameState !== 'start') {
+        console.warn("Attempted to start game from invalid state:", gameState);
+        return;
     }
+    console.log("Starting Game...");
 
-    gameData.baseHealth = 100;
-    gameData.health = gameData.baseHealth;
-    gameData.cash = 1000;
-    gameData.wave = 0;
-    gameData.enemiesDefeatedThisWave = 0;
-    gameData.enemiesSpawnedThisWave = 0;
-    gameData.waveDelayTimer = gameData.waveDelayDuration;
-    gameData.enemies = [];
-    gameData.projectiles = [];
-    gameData.particles = [];
-    gameData.damageNumbers = [];
-    gameData.shootCooldownTimer = 0; // Reseta cooldown ao iniciar
+    // Atualiza UI usando chamadas via window
+    if (typeof window.updateHealthDisplay === 'function') window.updateHealthDisplay(); else console.error("updateHealthDisplay not found");
+    if (typeof window.updateCashDisplay === 'function') window.updateCashDisplay(); else console.error("updateCashDisplay not found");
+    if (typeof window.updateWaveIndicator === 'function') window.updateWaveIndicator(); else console.error("updateWaveIndicator not found");
+    // Chamada para updateEnemiesRemainingDisplay AQUI
+    if (typeof window.updateEnemiesRemainingDisplay === 'function') window.updateEnemiesRemainingDisplay(); else console.error("updateEnemiesRemainingDisplay not found");
+    if (typeof window.hideUpgradePanel === 'function') window.hideUpgradePanel(); else console.error("hideUpgradePanel not found");
+    if (typeof window.hideStartScreen === 'function') window.hideStartScreen(); else console.error("hideStartScreen not found"); // Esconde tela inicial
 
-    initializeUpgradesAndShop();
 
-    updateHealthDisplay(gameData.health);
-    updateCashDisplay(gameData.cash);
-    updateWaveIndicator(gameData.wave);
-    updateEnemiesRemainingDisplay(0);
-    hideUpgradePanel();
+    // Inicia a primeira wave
+    gameState = 'waveIntermission'; // Começa na intermission da wave 1
+    waveTimer = WAVE_INTERMISSION_TIME / 2; // Meio tempo para wave 1
+    waveClearMessageTimer = 0; // Sem mensagem de clear no início
+    lastTime = performance.now();
 
-    gameData.running = true;
-    gameData.paused = false;
-    gameData.gameOver = false;
-    gameData.lastTime = performance.now();
-
-    requestAnimationFrame(gameLoop);
+    // Garante que o loop não está rodando antes de iniciar
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = requestAnimationFrame(gameLoop);
     console.log("Game Loop Started.");
 }
 
 function pauseGame() {
-    if (!gameData.running || gameData.paused || gameData.gameOver) return;
-    gameData.paused = true;
+    if (gameState !== 'playing') return;
+    gameState = 'paused';
+    cancelAnimationFrame(animationFrameId); // Para o loop
+    animationFrameId = null;
     console.log("Game Paused.");
+    if (typeof window.showPauseMenu === 'function') window.showPauseMenu(); // Mostra menu de pausa
 }
 
 function resumeGame() {
-    if (!gameData.running || !gameData.paused || gameData.gameOver) return;
-    gameData.paused = false;
-    gameData.lastTime = performance.now();
-    requestAnimationFrame(gameLoop);
+    if (gameState !== 'paused') return;
+    gameState = 'playing';
+    lastTime = performance.now(); // Reseta timer para evitar salto no deltaTime
+    if (!animationFrameId) { // Reinicia loop se não estiver rodando
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
     console.log("Game Resumed.");
+    if (typeof window.hidePauseMenu === 'function') window.hidePauseMenu(); // Esconde menu de pausa
 }
 
-function triggerGameOver() {
-    if (gameData.gameOver) return;
-    gameData.gameOver = true;
-    gameData.running = false;
-    gameData.paused = true;
+function gameOver() {
+    if (gameState === 'gameOver') return; // Evita chamadas múltiplas
+    gameState = 'gameOver';
+    cancelAnimationFrame(animationFrameId); // Para o loop
+    animationFrameId = null;
     console.log("Game Over!");
-    showGameOverScreen(gameData.cash);
+    saveGameData(); // Salva pontuação final/cash
+    if (typeof window.showGameOverScreen === 'function') window.showGameOverScreen(cash); // Mostra tela de game over com cash final
 }
 
-function nextWave() {
-    gameData.wave++;
-    gameData.enemiesThisWave = gameData.config.waveStartEnemyCount + (gameData.wave - 1) * gameData.config.waveEnemyIncrement;
-    gameData.enemiesSpawnedThisWave = 0;
-    gameData.enemiesDefeatedThisWave = 0;
-    gameData.enemySpawnTimer = 0;
-    gameData.enemySpawnInterval = Math.max(200, 1500 - gameData.wave * 50);
-    gameData.waveDelayTimer = 0;
+// --- Lógica de Ativação (Chamada por Input/UI) ---
+function activateShield() {
+     const now = performance.now();
+     if (!player) return;
+     // Só ativa se desbloqueado e inativo
+     if (player.shieldUnlockLevel > 0 && player.shieldState === 'inactive') {
+         player.shieldState = 'active';
+         player.shieldTimer = now; // Marca início da ativação
+         console.log("Shield Activated!");
+     } else {
+         console.log(`Shield not ready. State: ${player.shieldState}`);
+         if(typeof createDamageNumber === 'function') createDamageNumber(player.x, player.y - player.radius, "Shield Not Ready", "#AAAAAA");
+     }
+}
 
-    console.log(`Starting Wave ${gameData.wave} with ${gameData.enemiesThisWave} enemies. Spawn Interval: ${gameData.enemySpawnInterval}ms`);
-    updateWaveIndicator(gameData.wave);
-    updateEnemiesRemainingDisplay(gameData.enemiesThisWave);
+function deployNanoBot() {
+    if (!player) return;
+    if (player.nanobotUnlockLevel <= 0) {
+        console.log("Nanobots not unlocked.");
+        if(typeof createDamageNumber === 'function') createDamageNumber(player.x, player.y - player.radius, "Locked!", "#FFAAAA");
+        return;
+    }
+    // Custo para implantar (definido em setup.js)
+    const DEPLOY_COST = 50; // Pode buscar de setup.js se preferir: typeof NANO_BOT_DEPLOY_COST !== 'undefined' ? NANO_BOT_DEPLOY_COST : 50;
+    if (cash < DEPLOY_COST) {
+        console.log("Not enough cash to deploy nanobot.");
+        if(typeof createDamageNumber === 'function') createDamageNumber(player.x, player.y - player.radius, `Need $${DEPLOY_COST}`, "#FFEB3B");
+        return;
+    }
 
-    updateAvailableUpgrades();
-    populateUpgradePanel(gameData.availableUpgrades, gameData.cash, purchaseUpgrade);
+    cash -= DEPLOY_COST;
+    // Chama updateCashDisplay via window
+    if (typeof window.updateCashDisplay === 'function') window.updateCashDisplay();
+    saveGameData(); // Salva cash após gastar
+
+    nanoBots.push(new NanoBot(player.x, player.y)); // Cria e adiciona ao array global
+    console.log("Deployed Nanobot!");
+    if(typeof createParticles === 'function') createParticles(player.x, player.y, NANO_BOT_COLOR, 10); // Efeito visual
 }
 
 // --- Funções de Lógica do Jogo (Chamadas no Loop) ---
 
 function updateGame(dt) {
-    updatePlayer(dt); // Controla o tiro automático
-    updateProjectiles(dt);
-    updateEnemies(dt);
-    updateParticles(dt);
-    updateDamageNumbers(dt);
-    handleEnemySpawning(dt);
-    handleWaveLogic(dt);
-    checkCollisions();
+    // Ordem de update pode importar
+    // Atualiza estado da wave primeiro para decidir se spawna/termina
+    updateWaveState(dt);
 
-    if (gameData.health <= 0) {
-        triggerGameOver();
+    // Atualiza entidades
+    updatePlayer(dt);    // Escudo, powerups, mira
+    updateEnemies(dt);   // Movimento, ataque, conversão
+    updateNanoBots(dt);  // Busca, movimento
+    updateBullets(dt);   // Movimento, colisão player/convertido
+    updateEnemyBullets(dt); // Movimento, colisão inimigo
+    updatePowerups(dt);  // Atração, expiração
+    updateParticles(dt); // Animação
+    updateDamageNumbers(dt); // Animação
+    updateScreenShake(dt); // Decaimento
+
+    // Tiro automático do jogador (após updates de estado)
+    if (gameState === 'playing' && player) { // Só atira se jogando e com player
+        player.lastBulletTime -= dt * 1000;
+        if (player.lastBulletTime <= 0) {
+            if(typeof shootBullet === 'function') shootBullet();
+            player.lastBulletTime = calculateFireRateDelay(); // Usa função que considera upgrades/powerups
+        }
+    }
+
+    // Verifica Game Over no final
+    if (health <= 0 && gameState !== 'gameOver') {
+        gameOver();
     }
 }
 
+
 function drawGame() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#222';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Desenha jogador
-    if (gameData.player && typeof gameData.player.draw === 'function') {
-         gameData.player.draw(ctx);
-    } else if (gameData.player) { // Fallback
-        ctx.fillStyle = gameData.config.playerColor; ctx.beginPath(); ctx.arc(gameData.player.x, gameData.player.y, gameData.player.radius, 0, Math.PI*2); ctx.fill();
+    // A função draw() agora está em drawing.js
+    if (typeof draw === 'function') {
+        draw();
+    } else {
+        // Fallback
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'red';
+        ctx.font = '20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText("Error: Drawing function not found.", canvas.width/2, canvas.height/2);
     }
-
-    // Desenha outros elementos
-    gameData.particles.forEach(p => { if(typeof p.draw === 'function') p.draw(ctx); });
-    gameData.projectiles.forEach(p => { if(typeof p.draw === 'function') p.draw(ctx); });
-    gameData.enemies.forEach(e => { if(typeof e.draw === 'function') e.draw(ctx); });
-    gameData.damageNumbers.forEach(dn => { if(typeof dn.draw === 'function') dn.draw(ctx); });
 }
 
 // --- Loop Principal do Jogo ---
 
 function gameLoop(timestamp) {
-    if (gameData.gameOver) return;
-    if (gameData.paused) return;
+    // Calcula deltaTime primeiro
+    deltaTime = (timestamp - lastTime) / 1000;
+    lastTime = timestamp;
+    // Limita deltaTime
+    const dtClamped = Math.min(deltaTime, 0.1);
 
-    gameData.deltaTime = (timestamp - gameData.lastTime) / 1000;
-    gameData.lastTime = timestamp;
-    const maxDeltaTime = 0.1;
-    const dtClamped = Math.min(gameData.deltaTime, maxDeltaTime);
 
-    updateGame(dtClamped);
-    drawGame();
+    // Verifica estado ANTES de processar
+    if (gameState === 'gameOver' || gameState === 'start') {
+        animationFrameId = null;
+        return;
+    }
+    if (gameState === 'paused' || gameState === 'shopOverlay') {
+        // Desenha o estado pausado/loja
+        drawGame(); // Renderiza enquanto pausado/na loja
+        animationFrameId = requestAnimationFrame(gameLoop); // Continua chamando o loop para checar mudança de estado
+        return;
+    }
 
-    requestAnimationFrame(gameLoop);
+    // Se chegou aqui, gameState é 'playing' ou 'waveIntermission'
+
+    // Tenta atualizar e desenhar
+    try {
+        // Roda updates apenas se 'playing' (intermission só precisa de timer e draw)
+        if (gameState === 'playing') {
+             updateGame(dtClamped);
+        } else if (gameState === 'waveIntermission') {
+             // Atualiza apenas o necessário para intermission
+             updateWaveState(dtClamped);
+             updateParticles(dtClamped); // Atualiza partículas existentes
+             updateDamageNumbers(dtClamped); // Números continuam subindo
+             updateScreenShake(dtClamped); // Shake decai?
+        }
+        drawGame(); // Sempre desenha
+    } catch (error) {
+        console.error("Error during game loop:", error);
+        gameState = 'paused'; // Pausa o jogo em caso de erro
+        if(ctx) {
+            // Tenta desenhar erro sobre o último frame válido
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'red';
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("An error occurred. Game paused.", canvas.width / 2, canvas.height / 2 - 10);
+             ctx.fillText("Check console (F12) for details.", canvas.width / 2, canvas.height / 2 + 10);
+        }
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+        return;
+    }
+
+
+    // Solicita próximo frame se não pausado/game over
+    if (gameState === 'playing' || gameState === 'waveIntermission') {
+        animationFrameId = requestAnimationFrame(gameLoop);
+    } else {
+         animationFrameId = null; // Garante que parou
+    }
 }
 
 // --- Funções Auxiliares e de Lógica Específica ---
 
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    if (gameData.player) {
-        gameData.player.x = canvas.width / 2;
-        gameData.player.y = canvas.height / 2;
+    const aspectRatio = 16 / 9;
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+
+    canvas.width = w;
+    canvas.height = h;
+
+    if (player) {
+        player.x = canvas.width / 2;
+        player.y = canvas.height / 2;
     }
-    // Redesenha imediatamente para evitar tela em branco durante resize
-    if(ctx) drawGame(); // Chama drawGame diretamente
+    // Redesenha imediatamente para evitar tela em branco
+    if (ctx && gameState !== 'loading' && gameState !== 'start') {
+        drawGame();
+    }
+}
+
+// Handler separado para keydown para poder remover o listener corretamente
+function handleKeyDown(e) {
+    // Pausar/Resumir/Fechar Loja com ESC ou P
+    if (e.key === 'Escape' || e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        if (gameState === 'shopOverlay') {
+            if (typeof window.hideShopOverlay === 'function') window.hideShopOverlay();
+        } else if (gameState === 'playing') {
+            pauseGame();
+        } else if (gameState === 'paused') {
+            resumeGame();
+        }
+    }
+
+    // Atalhos apenas se estiver jogando
+    if (gameState === 'playing') {
+        // Ativar Escudo (Espaço ou S)
+        if (e.key === ' ' || e.key.toLowerCase() === 's') {
+            e.preventDefault();
+            activateShield();
+        }
+        // Implantar Nanobot (B)
+        if (e.key.toLowerCase() === 'b') {
+            deployNanoBot();
+        }
+    }
 }
 
 function setupEventListeners() {
-    window.addEventListener('resize', resizeCanvas);
-
-    // Listeners para MIRA (mousePos)
-    canvas.addEventListener('mousemove', (event) => {
-        // Não precisa verificar pause aqui, mira sempre atualiza
+    // --- Define os handlers PRIMEIRO ---
+    const updateMousePos = (event) => {
         const rect = canvas.getBoundingClientRect();
-        gameData.mousePos = {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top
-        };
-    });
+        let clientX, clientY;
+        if (event.touches && event.touches.length > 0) {
+            clientX = event.touches[0].clientX;
+            clientY = event.touches[0].clientY;
+        } else if (event.clientX !== undefined) {
+            clientX = event.clientX;
+            clientY = event.clientY;
+        } else { return; }
+        mousePos.x = clientX - rect.left;
+        mousePos.y = clientY - rect.top;
+    };
+    const handleTouchMove = (e) => { e.preventDefault(); updateMousePos(e); };
+    const handleTouchStart = (e) => { e.preventDefault(); updateMousePos(e); };
+    const preventContextMenu = (e) => e.preventDefault();
 
-    canvas.addEventListener('touchmove', (event) => {
-        event.preventDefault();
-        if (event.touches.length > 0) {
-            const touch = event.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            gameData.mousePos = {
-                x: touch.clientX - rect.left,
-                y: touch.clientY - rect.top
-            };
-        }
-    }, { passive: false });
+    // Remove listeners antigos para evitar duplicação
+    window.removeEventListener('resize', resizeCanvas);
+    canvas.removeEventListener('mousemove', updateMousePos);
+    canvas.removeEventListener('touchmove', handleTouchMove);
+    canvas.removeEventListener('touchstart', handleTouchStart);
+    canvas.removeEventListener('mousedown', updateMousePos);
+    window.removeEventListener('keydown', handleKeyDown); // Usa o handler nomeado
+    canvas.removeEventListener('contextmenu', preventContextMenu); // Usa o handler nomeado
 
-    // Listeners para Iniciar Toque/Mira (atualiza posição inicial)
-     canvas.addEventListener('touchstart', (event) => {
-        event.preventDefault();
-         if (event.touches.length > 0) {
-            const touch = event.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            gameData.mousePos = {
-                x: touch.clientX - rect.left,
-                y: touch.clientY - rect.top
-            };
-        }
-    }, { passive: false });
-
-     canvas.addEventListener('mousedown', (event) => {
-         // Atualiza posição da mira ao clicar, caso não tenha movido antes
-         const rect = canvas.getBoundingClientRect();
-         gameData.mousePos = {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top
-        };
-     });
-
-
-     // --- REMOVIDOS Listeners que setavam gameData.isShooting ---
-     // canvas.addEventListener('mousedown', ...); // Parte do isShooting removida
-     // canvas.addEventListener('mouseup', ...);
-     // canvas.addEventListener('touchstart', ...); // Parte do isShooting removida
-     // canvas.addEventListener('touchend', ...);
-
-     // Impede o menu de contexto
-    canvas.addEventListener('contextmenu', (event) => event.preventDefault());
-}
-
-// --- Funções de Update Principais ---
-
-function updatePlayer(dt) {
-     // Lógica de tiro AUTOMÁTICO
-    gameData.shootCooldownTimer -= dt * 1000; // Decrementa cooldown
-
-    // Atira se o cooldown acabou e o jogo está rodando
-    if (gameData.shootCooldownTimer <= 0 && !gameData.paused && !gameData.gameOver) {
-        if(typeof shootBullet === 'function') {
-            shootBullet(); // Chama a função de disparo
-        } else {
-            console.error("Função shootBullet não definida!");
-        }
-
-        // Reseta o cooldown usando o valor calculado (que inclui upgrades)
-        // calculateFireRateDelay deve estar definida em gameobjects.js
-        if (typeof calculateFireRateDelay === 'function') {
-             gameData.shootCooldownTimer = calculateFireRateDelay();
-        } else {
-             console.error("Função calculateFireRateDelay não definida! Usando fallback.");
-             gameData.shootCooldownTimer = 1500; // Fallback para 1.5s
-        }
-    }
+    // Adiciona novos listeners
+    window.addEventListener('resize', resizeCanvas);
+    canvas.addEventListener('mousemove', updateMousePos);
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('mousedown', updateMousePos);
+    window.addEventListener('keydown', handleKeyDown); // Usa o handler nomeado
+    canvas.addEventListener('contextmenu', preventContextMenu); // Usa o handler nomeado
 }
 
 
-function updateProjectiles(dt) {
-    for (let i = gameData.projectiles.length - 1; i >= 0; i--) {
-        const p = gameData.projectiles[i];
-         if(typeof p.update === 'function') {
-            p.update(dt);
-            if (p.x + p.radius < 0 || p.x - p.radius > canvas.width || p.y + p.radius < 0 || p.y - p.radius > canvas.height) {
-                gameData.projectiles.splice(i, 1);
-            }
-         } else {
-             gameData.projectiles.splice(i, 1);
-         }
-    }
-}
+// --- Gerenciamento de Upgrades ---
 
-function handleEnemySpawning(dt) {
-    if (gameData.wave > 0 && gameData.waveDelayTimer <= 0 && gameData.enemiesSpawnedThisWave < gameData.enemiesThisWave) {
-        gameData.enemySpawnTimer -= dt * 1000;
-        if (gameData.enemySpawnTimer <= 0) {
-            if(typeof spawnEnemy === 'function') {
-                spawnEnemy();
-            } else {
-                 console.error("Função spawnEnemy não definida!");
-            }
-            gameData.enemySpawnTimer = gameData.enemySpawnInterval;
-        }
-    }
-}
+let shopItems = []; // Array que guarda a definição e estado dos upgrades
 
-function updateEnemies(dt) {
-    if (!gameData.player) return;
-    gameData.enemies.forEach(enemy => {
-         if(typeof enemy.update === 'function') {
-            enemy.update(dt, gameData.player.x, gameData.player.y);
-         }
-    });
-}
-
-function updateParticles(dt) {
-     for (let i = gameData.particles.length - 1; i >= 0; i--) {
-        const p = gameData.particles[i];
-         if(typeof p.update === 'function') {
-             p.update(dt);
-             if (p.life <= 0) {
-                 gameData.particles.splice(i, 1);
-             }
-         } else {
-              gameData.particles.splice(i, 1); // Remove se não tiver update
-         }
-    }
-}
-
-function updateDamageNumbers(dt) {
-     for (let i = gameData.damageNumbers.length - 1; i >= 0; i--) {
-        const dn = gameData.damageNumbers[i];
-         if(typeof dn.update === 'function') {
-             dn.update(dt);
-              if (dn.life <= 0) {
-                 gameData.damageNumbers.splice(i, 1);
-             }
-         } else {
-             gameData.damageNumbers.splice(i, 1); // Remove se não tiver update
-         }
-    }
-}
-
-
-function handleWaveLogic(dt) {
-    if (gameData.waveDelayTimer > 0) {
-        gameData.waveDelayTimer -= dt * 1000;
-        if (gameData.waveDelayTimer <= 0) {
-            nextWave();
-        }
-    }
-    else if (gameData.wave > 0 && gameData.enemiesThisWave > 0 && gameData.enemies.length === 0 && gameData.enemiesSpawnedThisWave >= gameData.enemiesThisWave) {
-        console.log(`Wave ${gameData.wave} cleared!`);
-        gameData.waveDelayTimer = gameData.waveDelayDuration;
-        updateEnemiesRemainingDisplay(0);
-        updateAvailableUpgrades();
-        populateUpgradePanel(gameData.availableUpgrades, gameData.cash, purchaseUpgrade);
-    }
-}
-
-function checkCollisions() {
-    if (!gameData.player) return;
-
-    // Projéteis vs Inimigos
-    for (let i = gameData.projectiles.length - 1; i >= 0; i--) {
-        const projectile = gameData.projectiles[i];
-        let projectileRemoved = false;
-        for (let j = gameData.enemies.length - 1; j >= 0; j--) {
-            if (projectileRemoved) break;
-            const enemy = gameData.enemies[j];
-            // Usa o raio base do inimigo para colisão (não o raio visual pulsante)
-            const collisionRadiusEnemy = enemy.baseRadius || enemy.radius;
-            const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
-
-            if (dist < projectile.radius + collisionRadiusEnemy) {
-                if (typeof enemy.takeDamage === 'function') {
-                    enemy.takeDamage(projectile.damage);
-                    // Cria número de dano
-                    createDamageNumber(enemy.x, enemy.y, Math.round(projectile.damage).toString(), '#FFFFFF');
-                } else {
-                     console.warn("Enemy sem método takeDamage");
-                     enemy.health -= projectile.damage; // Fallback
-                }
-
-                gameData.projectiles.splice(i, 1);
-                projectileRemoved = true;
-
-                if (enemy.health <= 0) {
-                    gameData.cash += enemy.value || 0;
-                    updateCashDisplay(gameData.cash);
-                    gameData.enemies.splice(j, 1);
-                    gameData.enemiesDefeatedThisWave++;
-                    updateEnemiesRemainingDisplay(Math.max(0, gameData.enemiesThisWave - gameData.enemiesDefeatedThisWave));
-                    updateAvailableUpgrades();
-                    populateUpgradePanel(gameData.availableUpgrades, gameData.cash, purchaseUpgrade);
-                    // Criar partículas de morte
-                    createParticles(enemy.x, enemy.y, '#FF8888', 10, 1.2);
-                }
-            }
-        }
+function initializeUpgrades() {
+    // Zera os níveis no objeto 'player'
+    if (player) {
+        player.shootRateLevel = 0;
+        player.projectileDamageLevel = 0;
+        player.projectileSpeedLevel = 0;
+        player.maxHealthLevel = 0;
+        player.projectileSizeLevel = 0;
+        player.projectilePierceLevel = 0;
+        player.shieldUnlockLevel = 0;
+        player.shieldDurationLevel = 0;
+        player.shieldCooldownLevel = 0;
+        player.shieldExplodeLevel = 0;
+        player.nanobotUnlockLevel = 0;
+        player.nanobotInfectLevel = 0;
+        player.autoAimLevel = 0;
     }
 
-    // Inimigos vs Jogador
-    for (let i = gameData.enemies.length - 1; i >= 0; i--) {
-        const enemy = gameData.enemies[i];
-        const collisionRadiusEnemy = enemy.baseRadius || enemy.radius;
-        const dist = Math.hypot(gameData.player.x - enemy.x, gameData.player.y - enemy.y);
-
-        if (dist < gameData.player.radius + collisionRadiusEnemy) {
-            gameData.health -= enemy.damage || gameData.config.enemyDamage;
-            updateHealthDisplay(gameData.health);
-             // Cria número de dano no jogador
-             createDamageNumber(player.x, player.y, Math.round(enemy.damage || gameData.config.enemyDamage).toString(), '#FF0000');
-
-            // Remove inimigo após colidir
-            createParticles(enemy.x, enemy.y, '#FFAA00', 8, 1.0); // Partículas de colisão
-            gameData.enemies.splice(i, 1);
-            gameData.enemiesDefeatedThisWave++;
-             updateEnemiesRemainingDisplay(Math.max(0, gameData.enemiesThisWave - gameData.enemiesDefeatedThisWave));
-
-             if (gameData.health <= 0) {
-                 triggerGameOver();
-                 return;
-             }
-        }
-    }
-}
-
-
-// --- Gerenciamento de Upgrades e Loja ---
-
-function initializeUpgradesAndShop() {
-    // Zera os níveis antes de definir os itens
-    if(gameData.player) {
-        gameData.player.shootRateLevel = 0; // Assume que existe essa propriedade ou a adiciona
-        gameData.player.projectileDamageLevel = 0;
-        gameData.player.projectileSpeedLevel = 0;
-        gameData.player.maxHealthLevel = 0;
-        gameData.player.projectileSizeLevel = 0;
-         // Reseta os valores base do jogador para garantir consistência
-         gameData.player.shootRate = gameData.config.playerShootRate;
-         gameData.player.projectileDamage = gameData.config.projectileDamage;
-         gameData.player.projectileSpeed = gameData.config.projectileSpeed;
-         gameData.player.projectileRadius = gameData.config.projectileRadius;
-         // Vida já é resetada em initializeGame
-    }
-
-
-    gameData.shopItems = [
-        // IDs devem ser únicos. baseCost é o custo para ir do nível 0 para o 1.
-        { id: 'shootRate', name: 'Cadência de Tiro', description: 'Atira mais rápido.', level: 0, maxLevel: 5, baseCost: 60, costIncreaseFactor: 1.7, effect: (p, lvl) => { /* Efeito aplicado por calculateFireRateDelay */ }, purchased: false },
-        { id: 'projDmg', name: 'Dano do Projétil', description: 'Projéteis causam mais dano.', level: 0, maxLevel: 5, baseCost: 75, costIncreaseFactor: 1.8, effect: (p, lvl) => { /* Efeito aplicado por calculateBulletDamage */ }, purchased: false },
-        { id: 'projSpd', name: 'Velocidade do Projétil', description: 'Projéteis mais rápidos.', level: 0, maxLevel: 4, baseCost: 50, costIncreaseFactor: 1.6, effect: (p, lvl) => { /* Efeito aplicado por calculateBulletSpeed */ }, purchased: false },
-        { id: 'maxHp', name: 'Vida Máxima', description: 'Aumenta sua vida máxima (+25).', level: 0, maxLevel: 4, baseCost: 100, costIncreaseFactor: 2.0, effect: (p, lvl) => { gameData.baseHealth = 100 + lvl * 25; gameData.health += 25; updateHealthDisplay(gameData.health); }, purchased: false }, // Efeito direto
-        { id: 'projSize', name: 'Tamanho do Projétil', description: 'Projéteis maiores (+1px raio).', level: 0, maxLevel: 3, baseCost: 70, costIncreaseFactor: 1.7, effect: (p, lvl) => { p.projectileRadius = gameData.config.projectileRadius + lvl * 1; }, purchased: false }, // Efeito direto
+    // Define a estrutura dos upgrades disponíveis na loja
+    shopItems = [
+        // ID, Nome, Descrição, Nível Inicial, Nível Máx, Custo Base, Fator Custo, Chave do Player (para nível), Efeito (opcional, direto)
+        { id: 'shootRate', name: 'Cadência de Tiro', description: `Aumenta a velocidade de disparo.`, level: 0, maxLevel: 8, baseCost: 60, costIncreaseFactor: 1.7, playerKey: 'shootRateLevel' }, // Descrição genérica
+        { id: 'projDmg', name: 'Dano do Projétil', description: `Aumenta o dano base do projétil.`, level: 0, maxLevel: 10, baseCost: 75, costIncreaseFactor: 1.8, playerKey: 'projectileDamageLevel' }, // Descrição genérica
+        { id: 'projSpd', name: 'Velocidade do Projétil', description: `Aumenta a velocidade do projétil.`, level: 0, maxLevel: 5, baseCost: 50, costIncreaseFactor: 1.6, playerKey: 'projectileSpeedLevel' }, // Descrição genérica
+        { id: 'projSize', name: 'Tamanho do Projétil', description: `Aumenta o raio do projétil.`, level: 0, maxLevel: 4, baseCost: 70, costIncreaseFactor: 1.7, playerKey: 'projectileSizeLevel' }, // Descrição genérica
+        { id: 'projPierce', name: 'Perfuração', description: `Projéteis atingem mais inimigos.`, level: 0, maxLevel: 5, baseCost: 120, costIncreaseFactor: 2.0, playerKey: 'projectilePierceLevel' }, // Descrição genérica
+        { id: 'maxHp', name: 'Vida Máxima', description: 'Aumenta vida máxima (+25). Cura 25.', level: 0, maxLevel: 5, baseCost: 100, costIncreaseFactor: 2.0, playerKey: 'maxHealthLevel', effect: () => { if(!player) return; baseHealth = 100 + player.maxHealthLevel * 25; health = Math.min(baseHealth, health + 25); if(typeof window.updateHealthDisplay === 'function') window.updateHealthDisplay(); } }, // Efeito direto com verificação
+        // --- Shield ---
+        { id: 'shieldUnlock', name: 'Desbloquear Escudo', description: 'Ative (Espaço/S) um escudo protetor.', level: 0, maxLevel: 1, baseCost: 150, costIncreaseFactor: 1, playerKey: 'shieldUnlockLevel'},
+        { id: 'shieldDuration', name: 'Duração do Escudo', description: `Aumenta duração do escudo. Req: Escudo.`, level: 0, maxLevel: 5, baseCost: 80, costIncreaseFactor: 1.6, playerKey: 'shieldDurationLevel', requires: 'shieldUnlockLevel'}, // Descrição genérica
+        { id: 'shieldCooldown', name: 'Recarga do Escudo', description: `Diminui recarga do escudo. Req: Escudo.`, level: 0, maxLevel: 7, baseCost: 90, costIncreaseFactor: 1.7, playerKey: 'shieldCooldownLevel', requires: 'shieldUnlockLevel'}, // Descrição genérica
+        { id: 'shieldExplode', name: 'Explosão de Escudo', description: 'Escudo explode ao acabar. Req: Escudo.', level: 0, maxLevel: 1, baseCost: 250, costIncreaseFactor: 1, playerKey: 'shieldExplodeLevel', requires: 'shieldUnlockLevel'},
+        // --- Nanobots ---
+        { id: 'nanoUnlock', name: 'Desbloquear Nanobots', description: 'Implante (B) nanobots para converter inimigos.', level: 0, maxLevel: 1, baseCost: 200, costIncreaseFactor: 1, playerKey: 'nanobotUnlockLevel'},
+        // Descrição corrigida para não usar a constante aqui
+        { id: 'nanoInfect', name: 'Velocidade de Infecção', description: `Nanobots convertem inimigos mais rápido. Req: Nanobots.`, level: 0, maxLevel: 5, baseCost: 100, costIncreaseFactor: 1.8, playerKey: 'nanobotInfectLevel', requires: 'nanobotUnlockLevel'},
+        // --- Auto Aim ---
+        { id: 'autoAim', name: 'Assistência de Mira', description: 'Melhora a precisão automática da mira.', level: 0, maxLevel: AUTO_AIM_MAX_LEVEL, baseCost: 130, costIncreaseFactor: 1.9, playerKey: 'autoAimLevel'},
     ];
 
-     // Aplica efeitos iniciais (nível 0) e reseta níveis
-     gameData.shopItems.forEach(item => {
-         item.level = 0;
-         item.purchased = false;
-         // Aplica efeito inicial se houver um efeito direto na definição
-         if (item.effect && gameData.player) {
-             item.effect(gameData.player, 0);
-         }
-     });
+    // Aplica efeitos iniciais (nível 0) se houver
+    shopItems.forEach(item => {
+        if (item.effect && player) {
+            // Garante que o nível no player é 0 antes de chamar o efeito inicial
+            if(item.playerKey) player[item.playerKey] = 0;
+            item.effect(); // Chama efeito com nível 0 implícito
+        }
+        // Garante que o nível no shopItem também começa em 0
+        item.level = 0;
+    });
 
-    updateAvailableUpgrades();
+    updateAvailableUpgrades(); // Atualiza a lista de upgrades visíveis
 }
 
 function calculateUpgradeCost(upgrade) {
     if (!upgrade || upgrade.level >= upgrade.maxLevel) {
-        return Infinity;
+        return Infinity; // Sem custo se maximizado
     }
+    // Custo = Base * (Fator ^ Nível Atual)
     return Math.floor(upgrade.baseCost * Math.pow(upgrade.costIncreaseFactor, upgrade.level));
 }
 
-
+// Retorna a definição completa dos itens da loja (usado pela UI)
 function getShopItemsDefinition() {
-     gameData.shopItems.forEach(item => {
+     shopItems.forEach(item => {
+        // Atualiza o nível atual baseado no jogador
+        if (player && item.playerKey && player[item.playerKey] !== undefined) {
+            item.level = player[item.playerKey];
+        } else {
+            item.level = 0; // Garante que o nível é 0 se não encontrado no player
+        }
+        // Calcula e adiciona o custo atual ao item
         item.cost = calculateUpgradeCost(item);
+        // Verifica se requisitos são atendidos
+        item.meetsRequirement = true; // Assume true por padrão
+        if (item.requires && player) {
+             const requiredLevel = player[item.requires] || 0;
+             if (requiredLevel <= 0) {
+                 item.meetsRequirement = false;
+             }
+        } else if (item.requires && !player) { // Se não tem player, não atende requisito
+             item.meetsRequirement = false;
+        }
      });
-    return gameData.shopItems;
+    // Retorna apenas os itens que atendem aos requisitos
+    return shopItems.filter(item => item.meetsRequirement);
 }
 
+
 function purchaseUpgrade(upgradeId) {
-    const upgrade = gameData.shopItems.find(item => item.id === upgradeId);
-    if (!upgrade || !gameData.player || upgrade.level >= upgrade.maxLevel) {
-        console.warn(`Tentativa de comprar upgrade inválido ou maximizado: ${upgradeId}`);
-        return;
+    const upgrade = shopItems.find(item => item.id === upgradeId);
+    if (!upgrade || !player) { console.warn("Upgrade ou Player não encontrado:", upgradeId); return; }
+    if (upgrade.level >= upgrade.maxLevel) { console.log("Upgrade já maximizado:", upgradeId); return; }
+
+    // Verifica requisitos novamente
+    if (upgrade.requires) {
+        const requiredLevel = player[upgrade.requires] || 0;
+        if (requiredLevel <= 0) {
+            console.log(`Requisito não atendido para ${upgrade.name}`);
+            if(typeof createDamageNumber === 'function') createDamageNumber(player.x, player.y - player.radius, "Req. Locked!", "#FFAAAA");
+            return;
+        }
     }
 
     const currentCost = calculateUpgradeCost(upgrade);
 
-    if (gameData.cash >= currentCost) {
-        gameData.cash -= currentCost;
-        upgrade.level++;
-        upgrade.purchased = true;
+    if (cash >= currentCost) {
+        cash -= currentCost;
+        // Atualiza o nível no objeto 'player'
+        if (upgrade.playerKey) {
+             // Inicializa se não existir
+            if (player[upgrade.playerKey] === undefined) player[upgrade.playerKey] = 0;
+            player[upgrade.playerKey]++;
+            upgrade.level = player[upgrade.playerKey]; // Sincroniza nível no shopItem
+        } else {
+             console.warn("Upgrade sem playerKey:", upgradeId);
+             upgrade.level++; // Incrementa nível no shopItem mesmo assim?
+        }
 
         console.log(`Upgrade ${upgrade.name} comprado! Nível: ${upgrade.level}/${upgrade.maxLevel}. Custo: ${currentCost}`);
 
         // Aplica o efeito direto do upgrade (se houver)
         if (upgrade.effect) {
-            upgrade.effect(gameData.player, upgrade.level);
+            upgrade.effect();
         }
 
-        // Atualiza propriedades no objeto player que podem ser usadas pelos cálculos
-        // (Ex: Se o upgrade fosse 'shootRateLevel', atualizaria gameData.player.shootRateLevel)
-        // Isso depende de como você estrutura os upgrades. No exemplo atual,
-        // os cálculos (calculateFireRateDelay etc.) leem o nível diretamente do shopItems.
+        // Atualiza UI e salva
+        if (typeof window.updateCashDisplay === 'function') window.updateCashDisplay();
+        updateAvailableUpgrades(); // Recalcula quais upgrades mostrar no painel
+        if (typeof window.populateUpgradePanel === 'function') window.populateUpgradePanel(availableUpgrades, cash, purchaseUpgrade); // Atualiza o painel in-game
 
-        updateCashDisplay(gameData.cash);
-        upgrade.cost = calculateUpgradeCost(upgrade); // Recalcula custo para próximo nível
-
-        updateAvailableUpgrades();
-        populateUpgradePanel(gameData.availableUpgrades, gameData.cash, purchaseUpgrade);
-
-        if (isShopOpen) { // isShopOpen é global de ui.js
+        // Atualiza a loja se estiver aberta
+        if (window.isShopOpen) { // window.isShopOpen é de ui.js
              const currentShopItems = getShopItemsDefinition();
-             updateShopItems(currentShopItems, gameData.cash, purchaseUpgrade);
+             if (typeof window.updateShopItems === 'function') window.updateShopItems(currentShopItems, cash, purchaseUpgrade); // updateShopItems é de ui.js
         }
+        saveGameData(); // Salva progresso após compra
 
     } else {
-        console.log(`Cash insuficiente para ${upgrade.name}. Precisa: ${currentCost}, Tem: ${gameData.cash}`);
-        // Mostrar mensagem na UI?
+        console.log(`Cash insuficiente para ${upgrade.name}. Precisa: ${currentCost}, Tem: ${cash}`);
+        if(typeof createDamageNumber === 'function') createDamageNumber(player.x, player.y - player.radius, "Not Enough Cash!", "#FFEB3B");
+    }
+}
+
+let availableUpgrades = []; // Array para upgrades do painel in-game
+function updateAvailableUpgrades() {
+    if (!player) { // Se não houver jogador, não há upgrades disponíveis
+        availableUpgrades = [];
+        return;
+    }
+    // Filtra upgrades que não estão maximizados e atendem requisitos
+    availableUpgrades = shopItems.filter(item => {
+        const currentLevel = player[item.playerKey] || 0;
+        if (currentLevel >= item.maxLevel) return false; // Exclui maximizados
+        if (item.requires) { // Verifica requisitos
+            const requiredLevel = player[item.requires] || 0;
+            if (requiredLevel <= 0) return false; // Exclui se requisito não atendido
+        }
+        return true; // Inclui o upgrade
+    }).map(item => {
+        // Atualiza o custo para exibição
+        item.cost = calculateUpgradeCost(item);
+        // Garante que o nível está sincronizado com o player
+        item.level = player[item.playerKey] || 0;
+        return item;
+    });
+    // Ordena por custo (opcional)
+    // availableUpgrades.sort((a, b) => a.cost - b.cost);
+}
+
+// Função para ser chamada pela UI para atualizar o painel
+function populateUpgradePanel() {
+    // Chama a função global da UI para popular o painel
+    if(typeof window.populateUpgradePanel === 'function') {
+        window.populateUpgradePanel(availableUpgrades, cash, purchaseUpgrade);
     }
 }
 
 
-function updateAvailableUpgrades() {
-    // Mostra todos os upgrades não maximizados no painel in-game
-    gameData.availableUpgrades = gameData.shopItems
-        .filter(item => item.level < item.maxLevel)
-         .map(item => {
-             item.cost = calculateUpgradeCost(item);
-             return item;
-         });
-        // .sort((a, b) => a.cost - b.cost); // Opcional: Ordena
+// --- Persistência (LocalStorage) ---
+const SAVE_KEY = "circleShooter_saveData_v3"; // Mudar versão se estrutura mudar
+
+function saveGameData() {
+    if (!player) return; // Não salva sem player
+    try {
+        const dataToSave = {
+            cash: cash,
+            wave: currentWave,
+            baseHealth: baseHealth,
+            health: health,
+            // Salva níveis dos upgrades do jogador
+            levels: {}
+        };
+        // Popula os níveis dinamicamente a partir das keys em shopItems
+        shopItems.forEach(item => {
+            if (item.playerKey && player[item.playerKey] !== undefined) {
+                dataToSave.levels[item.playerKey] = player[item.playerKey];
+            }
+        });
+
+        localStorage.setItem(SAVE_KEY, JSON.stringify(dataToSave));
+        // console.log("Game data saved.");
+    } catch (error) {
+        console.error("Error saving game data:", error);
+    }
+}
+
+function loadGameData() {
+    try {
+        const savedData = localStorage.getItem(SAVE_KEY);
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            console.log("Loading saved data:", parsedData);
+
+            // Carrega estado básico
+            cash = parsedData.cash || 0;
+            currentWave = parsedData.wave || 0; // Carrega wave salva
+            baseHealth = parsedData.baseHealth || 100;
+            health = parsedData.health !== undefined ? parsedData.health : baseHealth; // Carrega vida salva ou usa baseHealth
+
+            // Carrega níveis de upgrade para o objeto player
+            if (player && parsedData.levels) {
+                 shopItems.forEach(item => {
+                     if(item.playerKey && parsedData.levels[item.playerKey] !== undefined) {
+                         player[item.playerKey] = parsedData.levels[item.playerKey];
+                         item.level = player[item.playerKey]; // Sincroniza nível no shopItem
+                         // Aplica efeito direto se houver, para garantir estado
+                         if(item.effect) item.effect();
+                     } else if (item.playerKey) {
+                         // Garante que nível no player seja 0 se não estava no save
+                         player[item.playerKey] = 0;
+                         item.level = 0;
+                     }
+                 });
+            } else if (player) {
+                 // Se não havia 'levels' no save, zera os níveis no player
+                 shopItems.forEach(item => {
+                     if(item.playerKey) player[item.playerKey] = 0;
+                     item.level = 0;
+                 });
+            }
+
+            console.log("Game data loaded.");
+            // Atualiza UI com dados carregados (chama funções globais)
+            if (typeof window.updateCashDisplay === 'function') window.updateCashDisplay();
+            if (typeof window.updateHealthDisplay === 'function') window.updateHealthDisplay();
+            if (typeof window.updateWaveIndicator === 'function') window.updateWaveIndicator();
+            updateAvailableUpgrades(); // Recalcula upgrades disponíveis
+            if (typeof window.populateUpgradePanel === 'function') window.populateUpgradePanel(availableUpgrades, cash, purchaseUpgrade); // Atualiza painel in-game
+            return true; // Indica que carregou com sucesso
+        }
+    } catch (error) {
+        console.error("Error loading game data:", error);
+        // localStorage.removeItem(SAVE_KEY); // Opcional: Limpar save corrompido
+    }
+    return false; // Indica que não carregou save
 }
 
 
-// --- Inicialização ---
+// --- Ativação de Powerups ---
+function activatePowerup(type) {
+    if (!player) return;
+    const now = performance.now();
+    console.log("Activating powerup:", type);
+
+    switch (type) {
+        case 'cash':
+            const amount = 50 + Math.floor(currentWave * 2.5);
+            cash += amount;
+            if (typeof window.updateCashDisplay === 'function') window.updateCashDisplay();
+            if (typeof createDamageNumber === 'function') createDamageNumber(player.x, player.y - player.radius, `+${amount}$`, POWERUP_CASH_COLOR);
+            saveGameData(); // Salva cash
+            break;
+        case 'health':
+            const healAmount = 20;
+            health = Math.min(baseHealth, health + healAmount);
+            if (typeof window.updateHealthDisplay === 'function') window.updateHealthDisplay();
+            if (typeof createDamageNumber === 'function') createDamageNumber(player.x, player.y - player.radius, `+${healAmount} HP`, POWERUP_HEALTH_COLOR);
+            break;
+        case 'shieldRecharge':
+            if (player.shieldUnlockLevel > 0) {
+                player.shieldState = 'inactive'; // Permite ativar imediatamente
+                player.shieldTimer = 0; // Reseta timer de cooldown
+                if (typeof createParticles === 'function') createParticles(player.x, player.y, POWERUP_SHIELD_RECHARGE_COLOR, 15);
+                if(typeof createDamageNumber === 'function') createDamageNumber(player.x, player.y - player.radius, "Shield Ready!", POWERUP_SHIELD_RECHARGE_COLOR);
+            }
+            break;
+        case 'damageBoost':
+            player.activePowerups.damageBoost = now + POWERUP_DAMAGE_BOOST_DURATION;
+            break;
+        case 'fireRateBoost':
+            player.activePowerups.fireRateBoost = now + POWERUP_FIRE_RATE_BOOST_DURATION;
+            break;
+        case 'magnet':
+            player.activePowerups.magnet = now + POWERUP_MAGNET_DURATION;
+            break;
+        default:
+            console.warn("Unknown powerup type:", type);
+            break;
+    }
+}
+
+
+// --- Inicialização do Jogo ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Verifica se as classes e o canvas existem
-    if (typeof Player !== 'undefined' && typeof Projectile !== 'undefined' && typeof Enemy !== 'undefined' && canvas && ctx) {
-        initializeGame();
+    console.log("DOM Loaded. Initializing...");
+    // Verifica se as dependências (classes, canvas) existem
+    if (typeof Player !== 'undefined' && typeof Enemy !== 'undefined' && canvas && ctx) {
+        initializeGame(); // Inicializa tudo (cria player, upgrades, UI)
+        // Tenta carregar dados salvos APÓS inicializar upgrades
+        if (!loadGameData()) {
+             console.log("No saved data found or error loading. Starting fresh.");
+             // Garante que UI reflita estado inicial se não carregou save
+             if (typeof window.updateCashDisplay === 'function') window.updateCashDisplay();
+             if (typeof window.updateHealthDisplay === 'function') window.updateHealthDisplay();
+             if (typeof window.updateWaveIndicator === 'function') window.updateWaveIndicator();
+        }
+        // UI é inicializada dentro de initializeGame() -> initializeUI()
     } else {
-        console.error("Erro na inicialização: Classes essenciais, canvas ou contexto não encontrados. Verifique a ordem dos scripts e IDs HTML.");
-        // Tenta mostrar uma mensagem de erro na tela
-        const body = document.body;
-        if(body) body.innerHTML = '<h1 style="color: red; text-align: center; margin-top: 50px;">Erro ao carregar o jogo. Verifique o console (F12).</h1>';
+        console.error("Initialization failed: Dependencies missing (Player/Enemy class, canvas, or ctx). Check script order and HTML IDs.");
+        document.body.innerHTML = '<h1 style="color: red; text-align: center; margin-top: 50px;">Error Loading Game Assets. Check Console (F12).</h1>';
     }
 });
 
@@ -608,9 +734,9 @@ document.addEventListener('DOMContentLoaded', () => {
 window.startGame = startGame;
 window.pauseGame = pauseGame;
 window.resumeGame = resumeGame;
-window.isGamePaused = () => gameData.paused;
-window.isGameRunning = () => gameData.running;
-window.isGameOver = () => gameData.gameOver;
+window.isGamePaused = () => gameState === 'paused';
+window.isGameRunning = () => gameState === 'playing' || gameState === 'waveIntermission';
+window.isGameOver = () => gameState === 'gameOver';
 window.getShopItemsDefinition = getShopItemsDefinition;
 window.purchaseUpgrade = purchaseUpgrade;
-window.initializeGame = initializeGame; // Para o botão Restart
+window.initializeGame = initializeGame;

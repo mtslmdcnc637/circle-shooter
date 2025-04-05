@@ -1,400 +1,395 @@
-//--- START OF FILE circle-shooter-main/gameobjects.js ---
-// --- Game Object Creation and Management ---
+// --- DEFINIÇÕES DAS CLASSES ---
 
-// --- Player Related ---
+class Player {
+    constructor(x, y, radius, color) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        // Propriedades que serão gerenciadas por gameData e upgrades
+        this.shootRate = 5; // Valor base inicial, será sobrescrito por gameData.config e upgrades
+        this.projectileDamage = 10;
+        this.projectileSpeed = 500; // Valor base inicial
+        this.projectileRadius = 5;
+        this.projectileColor = '#FFFFFF';
+        this.lastBulletTime = 0; // Para o tiro automático inicial
+        // Adicionar outras propriedades base se necessário
+    }
+
+    draw(ctx) {
+        if (!ctx) return;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Update não é usado atualmente, lógica em main.js
+    // update(dt) { }
+}
+
+class Projectile {
+    constructor(x, y, radius, color, angle, speed, damage) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.speed = speed;
+        this.damage = damage;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+    }
+
+    update(dt) {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+    }
+
+    draw(ctx) {
+        if (!ctx) return;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+class Enemy {
+    constructor(x, y, radius, health, speed, value) {
+        this.x = x;
+        this.y = y;
+        this.baseRadius = radius; // Guarda o raio original para a pulsação
+        this.radius = radius; // Raio atual (usado para colisão)
+        this.maxHealth = health;
+        this.health = health;
+        this.speed = speed;
+        this.value = value;
+        this.color = '#FF0000'; // Cor de fallback
+        this.damage = 10;
+        this.type = 'basic';
+        // Propriedades para pulsação (NOVAS)
+        this.pulseTimer = Math.random() * Math.PI * 2; // Fase inicial aleatória
+    }
+
+    update(dt, playerX, playerY) {
+        // --- Lógica de Movimento ---
+        const dx = playerX - this.x;
+        const dy = playerY - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 0) {
+            const moveX = (dx / dist) * this.speed * dt;
+            const moveY = (dy / dist) * this.speed * dt;
+
+            if (dist > this.speed * dt) {
+                 this.x += moveX;
+                 this.y += moveY;
+            } else { // Evita tremer sobre o jogador
+                 this.x = playerX;
+                 this.y = playerY;
+            }
+        }
+
+        // --- Lógica de Pulsar (NOVA) ---
+        // PULSE_SPEED precisa ser acessível globalmente (definido em setup.js)
+        const speedConst = typeof PULSE_SPEED !== 'undefined' ? PULSE_SPEED : 4;
+        this.pulseTimer += dt * speedConst;
+        // Mantem o timer dentro do ciclo de 2*PI
+        if (this.pulseTimer > Math.PI * 2) {
+            this.pulseTimer -= Math.PI * 2;
+        }
+
+        // O raio de colisão pode continuar sendo o baseRadius ou variar um pouco?
+        // Por simplicidade, vamos manter o raio de colisão como baseRadius.
+        this.radius = this.baseRadius;
+
+        // --- Outra Lógica ---
+        // Ex: Atirar se for shooter, etc.
+    }
+
+    draw(ctx) {
+        if (!ctx) return;
+
+        // Calcula a escala atual baseada no timer de pulso
+        // PULSE_AMOUNT precisa ser acessível (definido em setup.js)
+        const amountConst = typeof PULSE_AMOUNT !== 'undefined' ? PULSE_AMOUNT : 0.05;
+        const scale = 1.0 + Math.sin(this.pulseTimer) * amountConst;
+        const currentDrawRadius = this.baseRadius * scale; // Raio visual atualizado
+
+        // Tenta desenhar a imagem SVG
+        if (typeof enemyImage !== 'undefined' && enemyImageLoaded) {
+            const drawSize = currentDrawRadius * 2; // Tamanho baseado no raio visual
+            const drawX = this.x - currentDrawRadius; // Centraliza a imagem
+            const drawY = this.y - currentDrawRadius; // Centraliza a imagem
+
+            // Desenha a imagem com a escala pulsante
+            ctx.drawImage(enemyImage, drawX, drawY, drawSize, drawSize);
+
+        } else {
+            // Fallback: Desenha um círculo com o raio visual pulsante
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, currentDrawRadius, 0, Math.PI * 2);
+            ctx.fill();
+            if (typeof enemyImage === 'undefined') console.warn("Variável global 'enemyImage' não encontrada.");
+            else if (!enemyImageLoaded) console.warn("'enemyImage' não carregada, desenhando círculo.");
+        }
+
+        // --- Barra de Vida --- (Desenha depois)
+        if (this.health < this.maxHealth) {
+            const barWidth = this.baseRadius * 1.5; // Largura baseada no raio base
+            const barHeight = 5;
+            const barX = this.x - barWidth / 2;
+            // Posiciona acima do raio *máximo* da pulsação para não sobrepor
+            const barY = this.y - (this.baseRadius * (1 + amountConst)) - barHeight - 5;
+
+            ctx.fillStyle = '#555';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            ctx.fillStyle = '#00FF00';
+            ctx.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+        }
+    }
+
+    takeDamage(amount) {
+        this.health -= amount;
+        if (this.health < 0) this.health = 0;
+    }
+}
+
+// --- Classe para Partículas (Exemplo) ---
+class Particle {
+    constructor(x, y, vx, vy, radius, color, life) {
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
+        this.radius = radius; this.color = color;
+        this.initialLife = life; this.life = life;
+        this.alpha = 1;
+    }
+
+    update(dt) {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.life -= dt * 1000;
+        this.alpha = Math.max(0, this.life / this.initialLife);
+    }
+
+    draw(ctx) {
+        if (!ctx || this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+// --- Classe para Números de Dano (Exemplo) ---
+class DamageNumber {
+    constructor(x, y, text, color, life) {
+        this.x = x + (Math.random() - 0.5) * 20;
+        this.y = y - 10 + (Math.random() - 0.5) * 10;
+        this.text = text;
+        this.color = color;
+        this.initialLife = life;
+        this.life = life;
+        this.alpha = 1;
+        // DAMAGE_NUMBER_SPEED precisa estar acessível (setup.js)
+        this.vy = typeof DAMAGE_NUMBER_SPEED !== 'undefined' ? DAMAGE_NUMBER_SPEED : -30;
+    }
+
+    update(dt) {
+        this.y += this.vy * dt;
+        this.life -= dt * 1000;
+        this.alpha = Math.max(0, this.life / this.initialLife);
+    }
+
+    draw(ctx) {
+        if (!ctx || this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+    }
+}
+
+
+// --- FUNÇÕES DE APOIO (Refatoradas para usar gameData e Classes) ---
+
 function calculateFireRateDelay() {
-    const baseDelay = 500; // Milliseconds between shots at level 0
-    return baseDelay / (1 + player.fireRateLevel * FIRE_RATE_INCREASE);
+    if (typeof gameData === 'undefined' || !gameData.player || !gameData.shopItems) return 1500; // Valor padrão
+
+    const upgrade = gameData.shopItems.find(item => item.id === 'shootRate');
+    const level = upgrade ? upgrade.level : 0;
+
+    // BASE_DELAY MODIFICADO PARA 1.5 SEGUNDOS
+    const baseDelay = 1000; // Milliseconds entre tiros no nível 0
+    // Fator de redução (exemplo: 15% mais rápido por nível)
+    // Ajuste este fator se necessário para balancear o upgrade
+    const reductionFactor = 0.85; // 1.0 - 0.15
+
+    // Calcula o delay: base * (fator ^ nivel)
+    // Nível 0: 1500 * (0.85^0) = 1500ms
+    // Nível 1: 1500 * (0.85^1) = 1275ms
+    // Nível 2: 1500 * (0.85^2) = 1083ms etc.
+    const calculatedDelay = baseDelay * Math.pow(reductionFactor, level);
+
+    // Define um limite mínimo para o delay (ex: 100ms)
+    return Math.max(100, calculatedDelay);
 }
 
 function calculateBulletSpeed() {
-    return BASE_BULLET_SPEED * (1 + player.bulletSpeedLevel * BULLET_SPEED_INCREASE);
+    if (typeof gameData === 'undefined' || !gameData.player || !gameData.shopItems) return gameData.config.projectileSpeed || 500;
+
+    const upgrade = gameData.shopItems.find(item => item.id === 'projSpd');
+    const level = upgrade ? upgrade.level : 0;
+    const baseSpeed = gameData.config.projectileSpeed || 500;
+    // Exemplo: +20% por nível
+    const increaseFactor = 0.20;
+
+    return baseSpeed * (1 + level * increaseFactor);
 }
 
 function calculateBulletDamage() {
-    // Apply damage powerup multiplier if active
-    const now = performance.now();
-    let damageMultiplier = player.damageMultiplier; // Base multiplier from upgrades
-    if (player.activePowerups.damageBoost && player.activePowerups.damageBoost > now) {
-        damageMultiplier *= 1.5; // Example: 50% boost from powerup
-    }
-    return BASE_BULLET_DAMAGE * damageMultiplier;
-}
+     if (typeof gameData === 'undefined' || !gameData.player || !gameData.shopItems) return gameData.config.projectileDamage || 1;
 
-function calculateShieldDuration() {
-    return BASE_SHIELD_ACTIVE_DURATION + (player.shieldDurationLevel * SHIELD_DURATION_INCREASE);
-}
+    const upgrade = gameData.shopItems.find(item => item.id === 'projDmg');
+    const level = upgrade ? upgrade.level : 0;
+    const baseDamage = gameData.config.projectileDamage || 1;
+     // Exemplo: +50% por nível
+    const increaseFactor = 0.50;
 
-function calculateShieldCooldown() {
-    return Math.max(MIN_SHIELD_COOLDOWN, BASE_SHIELD_COOLDOWN_DURATION - (player.shieldCooldownLevel * SHIELD_COOLDOWN_DECREASE));
+    let finalDamage = baseDamage * (1 + level * increaseFactor);
+
+    // Aplicar powerups se houver
+    // if (gameData.player.activePowerups...) { ... }
+
+    return Math.max(1, Math.round(finalDamage)); // Garante dano mínimo 1
 }
 
 function shootBullet() {
-    const now = performance.now();
-    const fireRateDelay = calculateFireRateDelay();
+    if (typeof gameData === 'undefined' || !gameData.player) return;
 
-    // Rapid fire powerup check
-    let actualFireRateDelay = fireRateDelay;
-    if (player.activePowerups.rapidFire && player.activePowerups.rapidFire > now) {
-        actualFireRateDelay *= 0.5; // Example: 50% faster firing with powerup
-    }
+    const playerRef = gameData.player;
+    const targetX = gameData.mousePos.x;
+    const targetY = gameData.mousePos.y;
 
-    // Auto-aim powerup check
-    let targetX = aimX; let targetY = aimY;
-    if (player.activePowerups.autoAim && player.activePowerups.autoAim > now) {
-        let closestEnemy = null; let minDistSq = Infinity;
-        enemies.forEach(enemy => {
-            if (enemy && !enemy.converted && enemy.health > 0) {
-                const distSq = distanceSquared(player.x, player.y, enemy.x, enemy.y);
-                if (distSq < minDistSq && distSq < (canvas.width * 0.7)**2) { // Target enemies within 70% of screen width
-                    minDistSq = distSq; closestEnemy = enemy;
-                }
-            }
-        });
-        if (closestEnemy) { targetX = closestEnemy.x; targetY = closestEnemy.y; }
-    }
+    const dx = targetX - playerRef.x;
+    const dy = targetY - playerRef.y;
+    if (dx === 0 && dy === 0) return;
 
-    if (now - player.lastBulletTime > actualFireRateDelay) {
-        player.lastBulletTime = now;
-        const dx = targetX - player.x;
-        const dy = targetY - player.y;
-        const angle = Math.atan2(dy, dx);
-        const speed = calculateBulletSpeed();
-        const damage = calculateBulletDamage(); // Uses function that includes powerup check
-        const pierceCount = player.bulletPierceUnlocked ? BULLET_PIERCE_MAX : 0;
+    const angle = Math.atan2(dy, dx);
+    const speed = calculateBulletSpeed();
+    const damage = calculateBulletDamage();
+    const radius = (playerRef.projectileRadius || gameData.config.projectileRadius);
+    const color = (playerRef.projectileColor || gameData.config.projectileColor);
 
-        const bulletsToShoot = 1 + player.weaponLevel; // Base + levels
-        const spreadAngle = degToRad(5 + bulletsToShoot * 2.5); // Adjust spread angle
+    // Criar projétil usando a classe
+    const newProjectile = new Projectile(
+        playerRef.x + Math.cos(angle) * (playerRef.radius + radius + 2),
+        playerRef.y + Math.sin(angle) * (playerRef.radius + radius + 2),
+        radius,
+        color,
+        angle,
+        speed,
+        damage
+    );
+    gameData.projectiles.push(newProjectile);
 
-        for (let i = 0; i < bulletsToShoot; i++) {
-            // Calculate angle for this bullet based on spread
-            // Ensure division by zero doesn't happen if bulletsToShoot is 1
-            const angleOffset = (bulletsToShoot > 1) ? (i - (bulletsToShoot - 1) / 2) * (spreadAngle / (bulletsToShoot - 1)) : 0;
-            const currentAngle = angle + angleOffset;
-
-            bullets.push({
-                x: player.x + Math.cos(currentAngle) * (player.radius + BULLET_RADIUS + 2), // Spawn outside player
-                y: player.y + Math.sin(currentAngle) * (player.radius + BULLET_RADIUS + 2),
-                vx: Math.cos(currentAngle) * speed,
-                vy: Math.sin(currentAngle) * speed,
-                radius: BULLET_RADIUS,
-                damage: damage,
-                hitsLeft: 1 + pierceCount // 1 base hit + pierce count
-            });
-        }
-        // Play sound effect?
-        createParticles(player.x + Math.cos(angle)*(player.radius+5), player.y + Math.sin(angle)*(player.radius+5), BULLET_COLOR, 1, 0.5); // Muzzle flash particle
-    }
-}
-
-function activateShield() {
-    if (!player.shieldUnlocked || player.shieldState !== 'inactive') return;
-    player.shieldState = 'active';
-    player.shieldTimer = performance.now();
-    // Play shield activation sound/effect
-    createParticles(player.x, player.y, SHIELD_COLOR, 15, 1.5, 800); // Shield activation burst
-}
-
-// --- Enemy Related ---
-function spawnEnemy(isBossMinion = false, bossRef = null, type = null, position = null, sizeMultiplier = 1) {
-    const canvasW = canvas?.width || 600;
-    const canvasH = canvas?.height || 400;
-    let enemyType = type;
-    let spawnPos = position;
-
-    // Determine spawn position if not provided
-    if (!spawnPos) {
-        const edge = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
-        const buffer = 50;
-        switch (edge) {
-            case 0: spawnPos = { x: Math.random() * canvasW, y: -buffer }; break; // Top edge
-            case 1: spawnPos = { x: canvasW + buffer, y: Math.random() * canvasH }; break; // Right edge
-            case 2: spawnPos = { x: Math.random() * canvasW, y: canvasH + buffer }; break; // Bottom edge
-            case 3: spawnPos = { x: -buffer, y: Math.random() * canvasH }; break; // Left edge
-        }
-    }
-
-    // Determine enemy type if not provided
-    if (!enemyType) {
-        const rand = Math.random();
-        if (currentWave > 15 && rand < 0.15 + (currentWave-15)*0.01) enemyType = 'splitter'; // Chance increases
-        else if (currentWave > 10 && rand < 0.30 + (currentWave-10)*0.01) enemyType = 'shooter'; // Chance increases
-        else if (currentWave > 5 && rand < 0.55 + (currentWave-5)*0.01) enemyType = 'triangle'; // Chance increases
-        else if (rand < 0.75) enemyType = 'square';
-        else enemyType = 'circle';
-    }
-
-    // Base stats
-    let color = ENEMY_CIRCLE_COLOR;
-    let radius = BASE_ENEMY_RADIUS;
-    let health = BASE_ENEMY_HEALTH;
-    let speed = BASE_ENEMY_SPEED;
-    let shootCooldown = ENEMY_SHOOT_COOLDOWN;
-
-    // Modify stats based on type
-    switch (enemyType) {
-        case 'square':
-            color = ENEMY_SQUARE_COLOR;
-            health *= 1.3; speed *= 0.9; break;
-        case 'triangle':
-            color = ENEMY_TRIANGLE_COLOR;
-            health *= 0.8; speed *= 1.4; break;
-        case 'shooter':
-            color = ENEMY_SHOOTER_COLOR;
-            health *= 0.9; speed *= 0.8; shootCooldown = ENEMY_SHOOT_COOLDOWN * Math.max(0.3, (0.8 - Math.min(0.5, currentWave * 0.015))); break; // Shoots faster on later waves, cap cooldown reduction
-        case 'splitter':
-            color = ENEMY_SPLITTER_COLOR;
-            health *= 1.5; speed *= 0.7; break;
-        case 'circle': // Default
-            break;
-    }
-
-    // Apply wave scaling
-    const waveMultiplier = 1 + (currentWave - 1) * 0.08; // Increase health slightly per wave
-    const speedWaveMultiplier = 1 + (currentWave - 1) * 0.04; // Increase speed slightly per wave
-    health = Math.floor(health * waveMultiplier);
-    speed = speed * speedWaveMultiplier + (Math.random() * ENEMY_SPEED_RANDOMNESS - ENEMY_SPEED_RANDOMNESS / 2);
-    speed = Math.max(20, speed); // Ensure minimum speed
-
-     // Apply size multiplier (used for splitter children, potentially others)
-     radius *= sizeMultiplier;
-     health = Math.max(10, Math.floor(health * sizeMultiplier)); // Smaller enemies have less health
-     speed *= (1 + (1-sizeMultiplier)*0.5); // Smaller enemies might be faster
-
-    // Apply boss minion modifications
-    if (isBossMinion) {
-        health = Math.max(15, Math.floor(BASE_ENEMY_HEALTH * 0.5 * waveMultiplier)); // Minions are weaker
-        radius *= 0.7;
-        speed *= 1.1; // Slightly faster?
-        color = lerpColor(color, BOSS_COLOR, 0.3);
-    }
-
-    enemies.push({
-        x: spawnPos.x, y: spawnPos.y,
-        radius: radius, color: color, currentColor: color,
-        health: health, maxHealth: health,
-        speed: speed, type: enemyType,
-        isBossMinion: isBossMinion, bossRef: bossRef, // Link to boss if minion
-        isBoss: false, // Set separately for the actual boss
-        converted: false, infectionTimer: null, conversionEndTime: 0, wanderAngle: Math.random() * Math.PI * 2,
-        lastShotTime: performance.now() + Math.random() * shootCooldown, // Stagger initial shots
-        shootCooldown: shootCooldown, // For shooter type
-        lastMinionSpawnTime: 0 // For Boss type
-    });
-
-    // Don't increment enemiesRemainingInWave here, do it in updateWaveState or startNextWave
-    updateEnemiesRemainingUI(); // Update count display
-}
-
-function spawnBoss() {
-    const canvasW = canvas?.width || 600;
-    const canvasH = canvas?.height || 400;
-    const radius = BASE_ENEMY_RADIUS * BOSS_RADIUS_MULTIPLIER;
-    const health = BASE_ENEMY_HEALTH * BOSS_HEALTH_MULTIPLIER * (1 + (currentWave/BOSS_WAVE_INTERVAL - 1) * 0.5); // Scale boss health by how many boss waves seen
-    const speed = BASE_ENEMY_SPEED * 0.5; // Bosses are typically slower
-
-    bossActive = true; // Set global flag
-
-    enemies.push({
-        x: canvasW / 2, y: -radius * 2, // Spawn off-screen top
-        radius: radius, color: BOSS_COLOR, currentColor: BOSS_COLOR,
-        health: health, maxHealth: health,
-        speed: speed, type: 'boss', // Special type
-        isBossMinion: false, bossRef: null,
-        isBoss: true, // The actual boss flag
-        converted: false, infectionTimer: null, conversionEndTime: 0, wanderAngle: 0,
-        lastShotTime: performance.now(), shootCooldown: ENEMY_SHOOT_COOLDOWN * 0.4, // Boss shoots faster?
-        lastMinionSpawnTime: performance.now() // Start cooldown for minion spawn
-    });
-     updateEnemiesRemainingUI();
-}
-
-function shootEnemyBullet(enemy, count = 1, spreadDeg = 10) {
-    const now = performance.now();
-    if (!enemy || enemy.converted || enemy.health <= 0) return;
-    if (enemy.type !== 'shooter' && enemy.type !== 'boss') return;
-
-    if (now - enemy.lastShotTime > enemy.shootCooldown) {
-        enemy.lastShotTime = now;
-        const angleToPlayer = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-        const bulletSpeed = ENEMY_BULLET_SPEED * (enemy.isBoss ? 1.2 : 1);
-        const bulletRadius = ENEMY_BULLET_RADIUS * (enemy.isBoss ? 1.1 : 1);
-        const bulletDamage = ENEMY_BULLET_DAMAGE * (enemy.isBoss ? 1.5 : 1) * (1 + currentWave * 0.015); // Scale damage
-        const spreadRad = degToRad(spreadDeg);
-
-        for(let i=0; i<count; i++) {
-            const angleOffset = (count > 1) ? (i - (count - 1) / 2) * (spreadRad / (count - 1)) : 0;
-            const currentAngle = angleToPlayer + angleOffset;
-            enemyBullets.push({
-                x: enemy.x + Math.cos(currentAngle) * (enemy.radius + bulletRadius),
-                y: enemy.y + Math.sin(currentAngle) * (enemy.radius + bulletRadius),
-                vx: Math.cos(currentAngle) * bulletSpeed,
-                vy: Math.sin(currentAngle) * bulletSpeed,
-                radius: bulletRadius,
-                damage: Math.floor(bulletDamage)
-            });
-        }
-    }
-}
-
-function shootConvertedBullet(enemy) {
-    const now = performance.now();
-    if (!enemy || !enemy.converted || enemy.health <= 0) return;
-
-    // Find nearest non-converted enemy target
-    let nearestEnemy = null;
-    let minDistSq = Infinity;
-    enemies.forEach(target => {
-        if (target && !target.converted && target.health > 0 && !target.isBossMinion) { // Don't target boss minions? Or maybe do?
-            const distSq = distanceSquared(enemy.x, enemy.y, target.x, target.y);
-            if (distSq < minDistSq && distSq < (canvas.width * 0.5)**2) { // Range limit
-                minDistSq = distSq;
-                nearestEnemy = target;
-            }
-        }
-    });
-
-    if (nearestEnemy && now - enemy.lastShotTime > CONVERTED_SHOOT_COOLDOWN) {
-        enemy.lastShotTime = now;
-        const angleToTarget = Math.atan2(nearestEnemy.y - enemy.y, nearestEnemy.x - enemy.x);
-        convertedBullets.push({
-            x: enemy.x + Math.cos(angleToTarget) * (enemy.radius + CONVERTED_BULLET_RADIUS),
-            y: enemy.y + Math.sin(angleToTarget) * (enemy.radius + CONVERTED_BULLET_RADIUS),
-            vx: Math.cos(angleToTarget) * CONVERTED_BULLET_SPEED,
-            vy: Math.sin(angleToTarget) * CONVERTED_BULLET_SPEED,
-            radius: CONVERTED_BULLET_RADIUS,
-            damage: CONVERTED_BULLET_DAMAGE * player.damageMultiplier // Scale with player damage upgrades?
-        });
-    }
-}
-
-function convertEnemy(enemy) {
-    if (!enemy || enemy.converted) return;
-    enemy.converted = true;
-    enemy.infectionTimer = null; // Stop infection progress
-    enemy.conversionEndTime = performance.now() + CONVERTED_DURATION;
-    enemy.color = CONVERTED_BULLET_COLOR; // Change base color
-    enemy.currentColor = CONVERTED_BULLET_COLOR;
-    // enemy.speed *= 0.8; // Optionally slow down converted enemies
-    enemy.radius *= CONVERTED_ENEMY_RADIUS_FACTOR; // Optionally shrink converted enemies
-    enemy.lastShotTime = performance.now(); // Reset shot timer
-    createParticles(enemy.x, enemy.y, CONVERTED_BULLET_COLOR, 12, 1.2, 600); // Conversion effect
-}
-
-function deployNanoBot() {
-    if (cash < NANO_BOT_DEPLOY_COST) {
-        displayCannotAfford('nanobot');
-        return;
-    }
-    // Check limit?
-    // if(nanoBots.length >= MAX_NANOBOTS) { console.log("Max nanobots reached"); return; }
-
-    cash -= NANO_BOT_DEPLOY_COST;
-    updateCashDisplay();
-    updateUpgradeUI(); // Update button state
-    saveGameData();
-
-    nanoBots.push({
-        x: player.x,
-        y: player.y,
-        radius: 5,
-        color: NANO_BOT_COLOR
-        // Target finding logic is in updateNanoBots
-    });
-    updateEnemiesRemainingUI(); // Update bot count display
+    // Efeito visual (partículas)
+    createParticles(playerRef.x + Math.cos(angle)*(playerRef.radius+5), playerRef.y + Math.sin(angle)*(playerRef.radius+5), color, 1, 0.5);
 }
 
 
-// --- Powerup Related ---
-function spawnPowerup(x, y) {
-    const typeRoll = Math.random();
-    let type = 'health'; // Default?
-    let color = POWERUP_HEALTH_COLOR;
-    let symbol = '+';
+function spawnEnemy() {
+    if (typeof gameData === 'undefined' || !canvas) return; // Precisa de gameData e canvas
 
-    // More complex weighting needed here
-    if (typeRoll < 0.30) { type = 'health'; color = POWERUP_HEALTH_COLOR; symbol = '+'; }
-    else if (typeRoll < 0.55) { type = 'rapidFire'; color = '#9C27B0'; symbol = 'F'; }
-    else if (typeRoll < 0.75) { type = 'damageBoost'; color = '#FF5722'; symbol = 'D'; }
-    else if (typeRoll < 0.90) { type = 'magnet'; color = POWERUP_MAGNET_COLOR; symbol = 'M'; }
-    else { type = 'autoAim'; color = AUTO_AIM_POWERUP_COLOR; symbol = '@'; } // AutoAim is rarer
+    const canvasW = canvas.width;
+    const canvasH = canvas.height;
+    let spawnPos;
+    const edge = Math.floor(Math.random() * 4);
+    const buffer = 50;
 
-
-    powerups.push({
-        x: x, y: y,
-        radius: 10,
-        type: type,
-        color: color,
-        symbol: symbol,
-        creationTime: performance.now()
-    });
-}
-
-function activatePowerup(powerup) {
-    const now = performance.now();
-    let duration = POWERUP_DURATION;
-    let message = "";
-
-    switch (powerup.type) {
-        case 'health':
-            health = Math.min(100, health + HEALTH_PACK_AMOUNT);
-            updateHealthDisplay();
-            createDamageNumber(player.x, player.y, `+${HEALTH_PACK_AMOUNT} HP`, POWERUP_HEALTH_COLOR);
-            message = "+Health!";
-            break;
-        case 'rapidFire':
-            player.activePowerups.rapidFire = now + duration;
-            message = "Rapid Fire!";
-            break;
-        case 'damageBoost':
-            player.activePowerups.damageBoost = now + duration;
-            message = "Damage Up!";
-            break;
-        case 'autoAim':
-            player.activePowerups.autoAim = now + duration;
-             message = "Auto Aim!";
-            break;
-        case 'magnet':
-             duration = MAGNET_DURATION; // Magnet has specific duration
-             player.activePowerups.magnet = now + duration;
-             message = "Magnet!";
-            break;
-        default:
-            console.warn("Unknown powerup type:", powerup.type);
-            return;
+    switch (edge) {
+        case 0: spawnPos = { x: Math.random() * canvasW, y: -buffer }; break;
+        case 1: spawnPos = { x: canvasW + buffer, y: Math.random() * canvasH }; break;
+        case 2: spawnPos = { x: Math.random() * canvasW, y: canvasH + buffer }; break;
+        default: spawnPos = { x: -buffer, y: Math.random() * canvasH }; break;
     }
 
-    // Display powerup message briefly?
-    // createGameMessage(message, powerup.color); // Need a function for this
-    createParticles(player.x, player.y, powerup.color, 15, 1.5, 700); // Pickup effect
+    // Usa valores base da config em main.js
+    const baseRadius = gameData.config.enemyBaseRadius || 15;
+    const baseHealth = gameData.config.enemyBaseHealth || 10;
+    const baseSpeed = gameData.config.enemyBaseSpeed || 40; // Velocidade base (pixels/segundo)
+    const baseValue = gameData.config.enemyValue || 5;
+
+    // Aplica scaling da wave
+    const wave = gameData.wave || 0;
+    const healthMultiplier = 1 + wave * 0.15; // Aumenta 15% por wave (depois da wave 0)
+    const speedMultiplier = 1 + wave * 0.08; // Aumenta 8% por wave
+
+    const radius = baseRadius; // Raio não escala por padrão
+    const health = Math.ceil(baseHealth * healthMultiplier);
+    const speed = baseSpeed * speedMultiplier;
+    const value = baseValue; // Valor não escala por padrão
+
+    // Cria instância da classe Enemy
+    const newEnemy = new Enemy(
+        spawnPos.x, spawnPos.y,
+        radius, health, speed, value
+    );
+    // Definir tipo, cor, etc. baseado em regras (se houver)
+    // newEnemy.type = ...
+    // newEnemy.color = ...
+
+    gameData.enemies.push(newEnemy);
+    gameData.enemiesSpawnedThisWave++; // Incrementa aqui ao spawnar
+
+    // Atualiza UI (se a função existir)
+    updateEnemiesRemainingUI();
 }
 
+// --- Funções de Efeitos ---
 
-// --- Effects Related ---
-function createParticles(x, y, color = '#FFFFFF', count = PARTICLE_COUNT, speedMultiplier = 1, lifespan = PARTICLE_LIFESPAN) {
+function createParticles(x, y, color = '#FFFFFF', count = 5, speedMultiplier = 1, lifespan = 500) {
+     if (typeof gameData === 'undefined' || typeof Particle === 'undefined') return;
+     const particleSpeedConst = typeof PARTICLE_SPEED !== 'undefined' ? PARTICLE_SPEED : 150;
+     const particleRadiusConst = typeof PARTICLE_RADIUS !== 'undefined' ? PARTICLE_RADIUS : 2;
+
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = PARTICLE_SPEED * speedMultiplier * (0.5 + Math.random() * 0.8); // Vary speed
-        const life = lifespan * (0.7 + Math.random() * 0.6); // Vary lifespan
-        particles.push({
-            x: x, y: y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            radius: PARTICLE_RADIUS * (0.8 + Math.random() * 0.4), // Vary size
-            color: color,
-            life: life,
-            initialLife: life, // Store initial life for alpha calculation
-            alpha: 1
-        });
+        const speed = particleSpeedConst * speedMultiplier * (0.5 + Math.random() * 0.8);
+        const life = lifespan * (0.7 + Math.random() * 0.6);
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+        const radius = particleRadiusConst * (0.8 + Math.random() * 0.4);
+
+        gameData.particles.push(new Particle(x, y, vx, vy, radius, color, life));
     }
 }
 
 function createDamageNumber(x, y, text, color = '#FFFFFF') {
-    damageNumbers.push({
-        x: x + (Math.random() - 0.5) * 20, // Slightly random horizontal position
-        y: y - 10 + (Math.random() - 0.5) * 10, // Slightly random vertical position
-        text: text,
-        color: color, // Allow custom color (e.g., for cash bonus)
-        life: DAMAGE_NUMBER_LIFESPAN
-    });
+    if (typeof gameData === 'undefined' || typeof DamageNumber === 'undefined') return;
+    const lifespanConst = typeof DAMAGE_NUMBER_LIFESPAN !== 'undefined' ? DAMAGE_NUMBER_LIFESPAN : 800;
+
+    gameData.damageNumbers.push(new DamageNumber(x, y, text, color, lifespanConst));
+}
+
+
+// --- Funções Utilitárias (Manter ou mover para setup.js) ---
+// function degToRad(degrees) { return degrees * Math.PI / 180; }
+// function distanceSquared(x1, y1, x2, y2) { const dx = x2 - x1; const dy = y2 - y1; return dx * dx + dy * dy; }
+// function lerpColor(colorA, colorB, t) { ... }
+
+// --- Funções de UI (Placeholders, UI real em ui.js) ---
+function updateEnemiesRemainingUI() {
+    if (typeof window.updateEnemiesRemainingDisplay === 'function' && typeof gameData !== 'undefined') {
+        const remaining = Math.max(0, (gameData.enemiesThisWave || 0) - (gameData.enemiesDefeatedThisWave || 0));
+         // Ou contar inimigos vivos: const remaining = gameData.enemies.length;
+        window.updateEnemiesRemainingDisplay(remaining);
+    }
 }
